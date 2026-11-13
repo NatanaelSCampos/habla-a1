@@ -1,0 +1,50 @@
+/* Caderno de Dúvidas · mobile-first e tema claro/escuro do Habla */
+.doubt-shell{max-width:1120px;margin:0 auto;padding-bottom:26px}
+.doubt-stats{margin:14px 0 18px}.doubt-stats .stat{padding:17px}.doubt-stats .stat .value{font-size:28px}
+.doubt-toolbar,.doubt-form,.doubt-guide{padding:20px;margin-bottom:15px}
+.doubt-toolbar-intro{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.doubt-toolbar-intro h2{font-size:19px;margin:0 0 4px}
+.doubt-toolbar-intro p{margin:0;color:var(--muted);font-size:12px}
+.doubt-toolbar-intro .btn{min-height:45px}
+.doubt-filters{display:grid;grid-template-columns:auto minmax(125px,210px) minmax(155px,1fr);gap:10px;margin-top:18px;align-items:center}
+.doubt-filters input,.doubt-filters select,.doubt-entry input,.doubt-entry select,.doubt-entry textarea{width:100%;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;outline-offset:2px;font-size:14px}
+.doubt-filters select,.doubt-filters input{min-height:45px}
+.doubt-tabs{display:flex;padding:4px;gap:3px;background:var(--surface2);border-radius:12px;border:1px solid var(--line)}
+.doubt-tabs button{min-height:36px;border:0;padding:7px 11px;border-radius:8px;font-size:12px;font-weight:750;color:var(--muted);background:transparent;white-space:nowrap}
+.doubt-tabs button.active{background:var(--surface);color:var(--accentStrong);box-shadow:0 1px 8px #0000000e}
+.doubt-mode{margin-top:14px}.doubt-mode label{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12px;cursor:pointer}
+.doubt-mode input{height:18px;width:18px;accent-color:var(--accent)}
+.doubt-entry{display:grid;gap:10px;margin-top:15px}
+.doubt-entry>label,.doubt-entry .doubt-two label{display:grid;gap:6px;color:var(--text);font-size:12px;font-weight:740}
+.doubt-entry label b{color:#b74e45}.doubt-entry textarea{line-height:1.5;resize:vertical;min-height:76px}
+.doubt-entry #doubtAnswer{min-height:130px}
+.doubt-two{display:grid;grid-template-columns:1.2fr .8fr;gap:10px}
+.doubt-form-actions{display:flex;gap:9px;margin-top:10px;flex-wrap:wrap}
+.doubt-form-actions button{min-height:46px}
+.doubt-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-items:start}
+.doubt-card{padding:19px;min-width:0;overflow-wrap:anywhere}
+.doubt-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.doubt-pill{display:inline-flex;align-items:center;font-size:11px;font-weight:800;background:#fff3dc;color:#87601c;padding:5px 9px;border-radius:99px}
+.doubt-pill.done{background:#e6f6ee;color:#206e52}
+.doubt-meta{font-size:10px;color:var(--muted)}
+.doubt-card h3{font-size:17px;line-height:1.43;margin:16px 0 8px;letter-spacing:-.25px}
+.doubt-context{font-size:12px;color:var(--muted);margin:0 0 12px;white-space:pre-wrap}
+.doubt-es,.doubt-answer{display:grid;gap:7px;padding:12px;border-radius:11px;background:var(--surface2);margin-top:11px;font-size:13px;line-height:1.6}
+.doubt-es>span,.doubt-answer>span{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+.doubt-es .btn{justify-self:start}
+.doubt-answer{border-left:3px solid var(--accent)}
+.doubt-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.doubt-actions .btn{white-space:normal;min-height:39px;font-size:11px}
+.doubt-list.teacher-mode{grid-template-columns:1fr}
+.doubt-list.teacher-mode .doubt-card h3{font-size:clamp(20px,4vw,26px)}
+.doubt-list.teacher-mode .doubt-card{padding:24px}
+.doubt-empty{grid-column:1/-1;text-align:center;padding:40px 18px;background:var(--surface);border-radius:15px;border:1px dashed var(--line)}
+.doubt-empty-icon{font-size:38px;display:block;margin:0 0 10px}
+.doubt-empty strong{display:block;font-size:16px}
+.doubt-empty p{color:var(--muted);font-size:12px;margin:8px auto 16px;max-width:420px}
+.doubt-guide{margin:15px 0;font-size:12px;color:var(--text)}
+.doubt-guide p{margin:6px 0 0;line-height:1.7;color:var(--muted)}
+.doubt-shell .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:930px){.doubt-filters{grid-template-columns:1fr 1fr}.doubt-filters .doubt-tabs{grid-column:1/-1;width:max-content;max-width:100%}}
+@media(max-width:760px){.doubt-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.doubt-stats .stat{padding:13px 9px}.doubt-stats .stat .value{font-size:25px}.doubt-stats .stat-label{font-size:10px}.doubt-toolbar,.doubt-form,.doubt-guide{padding:16px}.doubt-toolbar-intro .btn{width:100%}.doubt-filters{grid-template-columns:1fr;gap:8px}.doubt-tabs{width:100%!important;justify-content:space-between}.doubt-tabs button{flex:1;padding:9px 5px}.doubt-two{grid-template-columns:1fr}.doubt-list{grid-template-columns:1fr}.doubt-card{padding:16px}.doubt-actions .btn{flex:1 1 auto}.doubt-entry textarea{font-size:16px}.doubt-filters input,.doubt-filters select{font-size:16px}.doubt-form-actions .btn{flex:1 1 100%}}
+@media(prefers-reduced-motion:reduce){.doubt-shell *{scroll-behavior:auto!important}}
