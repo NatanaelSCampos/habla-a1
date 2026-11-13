@@ -1,6 +1,6 @@
 /* Habla A1 — cache offline. Dados de estudo ficam apenas no dispositivo. */
-const CACHE='habla-a1-app-v5-review';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./study-lab.css','./study-lab.js','./icon-192.png','./icon-512.png','./icon-maskable-512.png'];
+const CACHE='habla-a1-app-v6-doubts';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./study-lab.css','./study-lab.js','./doubts.css','./doubts.js','./icon-192.png','./icon-512.png','./icon-maskable-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('habla-a1-app-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='GET'||new URL(req.url).origin!==self.location.origin)return;
