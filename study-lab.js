@@ -94,8 +94,8 @@ var dialogueData=[
  ]
 ];
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
-function day(){return new Date().toLocaleDateString("en-CA");}
-function datePlus(days){var d=new Date();d.setDate(d.getDate()+days);return d.toLocaleDateString("en-CA");}
+function day(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function datePlus(days){var d=new Date();d.setDate(d.getDate()+days);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(_){if(typeof toast==="function")toast("Não foi possível salvar as revisões.");}}
 function normalize(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("es").replace(/[¿?¡!.,;:]/g,"").replace(/\s+/g," ").trim();}
 function shuffled(list){var copy=list.slice();for(var i=copy.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var a=copy[i];copy[i]=copy[j];copy[j]=a;}return copy;}
@@ -167,7 +167,7 @@ function ask(q){
  '<div class="lab-help-row"><button class="btn secondary sm" data-act="lab-translation">'+(session.translation?"Ocultar tradução":"Ver tradução")+'</button><button class="btn secondary sm" data-act="lab-hint">Ver dica</button></div>'+
  (session.translation?'<div class="lab-reveal">'+esc(q.pt||"Tradução ainda não disponível para esse exercício adaptado.")+'</div>':'')+
  (session.hint?'<div class="lab-reveal">Dica: '+esc(kind==="cloze"?"Infinitivo: "+q.lemma+" · sujeito: "+VERB_PEOPLE[q.person]:kind==="transform"?"Troque o sujeito e a conjugação.":kind==="dictation"?"Ouça em partes.":kind==="dialogue"?"Use uma resposta curta e clara.":"Leia o contexto e escolha com atenção.")+'</div>':'')+
- '<div class="row wrap lab-submit">'+(!session.revealed?'<button class="btn primary" data-act="lab-check">'+(isManual?"Mostrar resposta-modelo":"Corrigir / revelar")+'</button>':btn("Continuar","lab-next","secondary"))+'</div>'+
+ '<div class="row wrap lab-submit">'+(!session.revealed?'<button class="btn primary" data-act="lab-check">'+(isManual?"Mostrar resposta-modelo":"Corrigir / revelar")+'</button>':"")+'</div>'+
  (session.revealed?feedback(q):'')+'</section>';
 }
 function feedback(q){
@@ -203,10 +203,10 @@ async function enableNotifications(){
  state.notifications.enabled=true;persist();render();toast("Lembretes locais ativados para quando o aplicativo estiver ativo.");
 }
 function reminderTick(){
- var n=state.notifications;if(!n.enabled||Notification.permission!=="granted")return;
+ var n=state.notifications;if(!n.enabled||!("Notification" in window)||Notification.permission!=="granted")return;
  if(typeof dayActivity==="function"&&dayActivity(today()).attempts>0)return;
  var now=new Date(),todayStr=day(),hour=now.getHours();
- var slots=n.hours.filter(function(h){return hour>=h;}).sort(function(a,b){return b-a;});
+ var slots=n.hours.filter(function(h){return hour===h&&now.getMinutes()<15;}).sort(function(a,b){return b-a;});
  if(!slots.length)return;
  var slot=slots[0],marker=todayStr+"-"+slot;
  if(n.sent[marker])return;
@@ -244,7 +244,7 @@ function handleAction(el){
  case "lab-hint":session.hint=!session.hint;session.answer=(document.getElementById("labAnswer")||{}).value||session.answer;renderBase();break;
  case "lab-listen":if(session){var q=session.deck[session.index];speak(q.type==="dialogue"?q.prompt:q.es);}break;
  case "lab-rate":graded(el.dataset.value);break;
- case "lab-next":if(session&&session.revealed){graded("hard");}break;
+ 
  case "lab-exit":session=null;renderBase();break;
  case "lab-reset":session=null;renderBase();break;
  case "lab-notify":enableNotifications();break;
@@ -264,7 +264,7 @@ document.addEventListener("visibilitychange",function(){if(!document.hidden)remi
 window.addEventListener("focus",reminderTick);
 setInterval(reminderTick,60000);
 setTimeout(reminderTick,1200);
-window.HablaLab={render:render,handleAction:handleAction,settings:state};
+window.HablaLab={render:render,handleAction:handleAction,settings:state,reload:function(){try{var re=JSON.parse(localStorage.getItem(KEY)||"{}");state=Object.assign({},DEFAULT,re);state.notifications=Object.assign({},DEFAULT.notifications,state.notifications||{});window.HablaLab.settings=state;session=null;}catch(_){}}};
 if(typeof GUIDE_PAGES!=="undefined")GUIDE_PAGES.lab=[
  ["Selecione as unidades","Escolha uma, várias ou todas as unidades; suas preferências ficam salvas.",".lab-units"],
  ["Alterne os tipos de treino","Diagnóstico, conjugação, transformação, ditado, conversação e exercícios do caderno.",".lab-controls"],
