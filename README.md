@@ -10,6 +10,7 @@ https://natanaelscampos.github.io/habla-a1/
 - 90 verbos com treino de conjugação
 - Simulações de conversas e situações do cotidiano
 - Caderno interativo organizado nas dez unidades do *Frecuencias A1*
+- **Caderno de Dúvidas** integrado: registre perguntas por unidade, use uma lista de pendências na aula, anote o que o professor explicou, marque como respondida ou reabra; tudo incluído no backup local.
 - **Revisão Inteligente**: escolha qualquer combinação das unidades 1 a 10, em qualquer dia
 - Modos: diagnóstico, conjugação, transformar frases, ditado, conversação, questões do caderno, revisão de dificuldades e misto
 - Autoavaliação da recuperação de memória, repetição espaçada e calendário de frequência
@@ -31,6 +32,7 @@ A seção **Revisão Inteligente** permite ativar notificações locais e escolh
 ## Estrutura do projeto
 - `index.html`: aplicativo integrado
 - `study-lab.js` e `study-lab.css`: revisão crescente e seleção de unidades
+- `doubts.js` e `doubts.css`: caderno pessoal de dúvidas, notas da aula e filtros
 - `sw.js`: cache offline e abertura do aplicativo ao tocar em uma notificação
 - `manifest.webmanifest` e ícones: instalação PWA
 
