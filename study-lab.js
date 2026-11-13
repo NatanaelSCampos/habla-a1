@@ -164,10 +164,10 @@ function ask(q){
  textPrompt+'<div class="lab-response">'+((isAudio||isManual)?'<button class="btn secondary sm" data-act="lab-listen">'+(isAudio?"🔊 Ouvir frase":"🔊 Ouvir pergunta")+'</button>':'')+
  '<label class="lab-answer-label" for="labAnswer">'+(isManual?"Sua resposta (ou fale e avalie de memória)":"Sua resposta")+'</label>'+
  (options.length&&kind==="workbook"?'<select id="labAnswer" class="field"><option value="">Escolha uma resposta</option>'+options.map(function(opt){return '<option value="'+esc(opt)+'" '+(opt===answer?"selected":"")+'>'+esc(opt)+'</option>';}).join("")+'</select>':'<textarea id="labAnswer" class="field" rows="'+(kind==="transform"||kind==="dialogue"?"3":"2")+'" placeholder="Tente lembrar antes de revelar..." '+(session.revealed?"readonly":"")+'>'+esc(answer)+'</textarea>')+'</div>'+
- '<div class="lab-help-row"><button class="btn secondary sm" data-act="lab-translation">'+(session.translation?"Ocultar tradução":"Ver tradução")+'</button><button class="btn secondary sm" data-act="lab-hint">Ver dica</button></div>'+
+ '<div class="lab-help-row"><button class="btn secondary sm" data-act="lab-translation">'+(session.translation?"Ocultar tradução":"Ver tradução")+'</button><button class="btn secondary sm" data-act="lab-hint">Ver dica</button><button class="btn secondary sm" data-act="lab-mic">🎤 Falar resposta</button></div>'+
  (session.translation?'<div class="lab-reveal">'+esc(q.pt||"Tradução ainda não disponível para esse exercício adaptado.")+'</div>':'')+
  (session.hint?'<div class="lab-reveal">Dica: '+esc(kind==="cloze"?"Infinitivo: "+q.lemma+" · sujeito: "+VERB_PEOPLE[q.person]:kind==="transform"?"Troque o sujeito e a conjugação.":kind==="dictation"?"Ouça em partes.":kind==="dialogue"?"Use uma resposta curta e clara.":"Leia o contexto e escolha com atenção.")+'</div>':'')+
- '<div class="row wrap lab-submit">'+(!session.revealed?'<button class="btn primary" data-act="lab-check">'+(isManual?"Mostrar resposta-modelo":"Corrigir / revelar")+'</button>':"")+'</div>'+
+ '<div class="row wrap lab-submit">'+(!session.revealed?'<button class="btn primary" data-act="lab-check">'+(isManual?"Mostrar resposta-modelo":"Corrigir / revelar")+'</button><button class="btn secondary" data-act="lab-giveup">Não lembro · revelar</button>':"")+'</div>'+
  (session.revealed?feedback(q):'')+'</section>';
 }
 function feedback(q){
@@ -238,8 +238,10 @@ function handleAction(el){
   session={mode:state.mode,deck:sequence(pool,Math.min(state.mode==="diagnostic"?15:state.count,pool.length)),index:0,grades:[],revealed:false,translation:false,hint:false,answer:""};renderBase();break;
  }
  case "lab-check":{
-  if(!session)break;var input=document.getElementById("labAnswer");session.answer=input?input.value:"";session.revealed=true;renderBase();break;
+  if(!session)break;var input=document.getElementById("labAnswer");session.answer=input?input.value:"";if(!session.answer.trim()&&session.deck[session.index].type!=="dialogue"){toast("Tente responder primeiro ou use Não lembro para revelar.");break;}session.revealed=true;renderBase();break;
  }
+ case "lab-giveup":if(session){session.answer="";session.revealed=true;renderBase();}break;
+ case "lab-mic":if(session&&typeof startListening==="function")startListening("labAnswer");break;
  case "lab-translation":session.translation=!session.translation;session.answer=(document.getElementById("labAnswer")||{}).value||session.answer;renderBase();break;
  case "lab-hint":session.hint=!session.hint;session.answer=(document.getElementById("labAnswer")||{}).value||session.answer;renderBase();break;
  case "lab-listen":if(session){var q=session.deck[session.index];speak(q.type==="dialogue"?q.prompt:q.es);}break;
