@@ -1,4 +1,6 @@
 /* Botão global e diálogo rápido para dúvidas · touch first */
+#doubtFabCount[hidden]{display:none!important}
+
 .dq-fab{position:fixed;z-index:850;bottom:26px;right:24px;display:inline-flex;align-items:center;gap:9px;min-height:48px;padding:12px 17px;border:0;border-radius:999px;background:var(--accent);color:white;font-size:13px;font-weight:800;box-shadow:0 10px 30px #16483155;cursor:pointer}
 .dq-fab:hover,.dq-fab:focus-visible{outline:2px solid var(--accentStrong);outline-offset:3px;filter:brightness(.96)}
 .dq-fab svg{flex:0 0 auto}.dq-fab .dq-count{display:inline-grid;place-items:center;min-width:21px;height:21px;padding:0 4px;background:#ffffff35;border-radius:11px;font-size:10px}
