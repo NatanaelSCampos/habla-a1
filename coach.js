@@ -1,6 +1,6 @@
 /* Habla A1 · Diagnóstico por habilidades + Conversação Progressiva v1
    Banco alimentado por VERB_BANK, BOOK_EX, SCENARIO_SETS e frases A1 já existentes.
-   Sem backend ou IA: respostas abertas são avaliadas pelo próprio estudante. */
+   As respostas abertas são comparadas com exemplos e autoavaliadas. */
 (function(){
 "use strict";
 const KEY="habla.coach.v1";
@@ -67,7 +67,7 @@ function diagnosticHome(){
  '<div class="coach-level-control"><label for="coachCount">Quantidade de questões</label><select id="coachCount" class="select">'+[10,20,30,40].map(n=>'<option value="'+n+'" '+(state.diagnosticLength===n?"selected":"")+'>'+n+' questões</option>').join("")+'</select></div>'+
  '<div class="coach-skills-preview">'+SKILLS.map(s=>'<div><span>'+s.icon+' '+s.name+'</span><small>'+esc(s.description)+'</small></div>').join("")+'</div>'+
  '<button class="btn primary coach-main-btn" data-act="coach-start">Iniciar diagnóstico</button></section>'+
- historyPanel()+'</div><p class="coach-warning">O resultado orienta seus estudos; não é um exame oficial. Respostas abertas e sua fluência são avaliadas por você. O reconhecimento de voz, quando disponível, transcreve a fala, mas não avalia pronúncia.</p></div>';
+ historyPanel()+'</div><p class="coach-warning">Use os resultados para descobrir o que revisar. Nas respostas livres, compare o que disse com os exemplos e avalie como conseguiu responder.</p></div>';
 }
 function vocabQuestions(){
  let out=[];
@@ -78,7 +78,7 @@ function vocabQuestions(){
  if(!["choice","match","fill"].includes(ex.kind))return;
  for(let i=0;i<ex.items.length;i++){
   let x=ex.items[i];if(!x.answer||!x.prompt)continue;
-  out.push({id:"w-"+ex.id+"-"+i,unit:ex.unit,skill:"vocab",mode:x.options&&x.options.length>1?"choice":"open",prompt:x.prompt,answer:x.answer,options:x.options||[],pt:"Vocabulário · "+ex.title,origin:"Caderno interativo adaptado, Unidade "+ex.unit});
+  out.push({id:"w-"+ex.id+"-"+i,unit:ex.unit,skill:"vocab",mode:x.options&&x.options.length>1?"choice":"open",prompt:x.prompt,answer:x.answer,options:x.options||[],pt:"Vocabulário · "+ex.title,origin:"Exercícios da Unidade "+ex.unit});
  }
  });
  return out;
@@ -88,7 +88,7 @@ function grammarQuestions(){
  for(const v of VERB_BANK.verbs)if(getUnits().includes(v.unit)){
   for(let person=0;person<Math.min(6,v.es_forms.length);person++)for(let index=0;index<Math.min(4,v.contexts.length);index++){
    const q=verbalSentence(v,person,index);
-   out.push({id:"g-"+q.id,unit:v.unit,skill:"grammar",mode:"fill",prompt:q.mask,answer:q.form,pt:q.pt,complete:q.es,explanation:v.note||"",lemma:v.lemma,origin:"Modelo novo alinhado à gramática da Unidade "+v.unit});
+   out.push({id:"g-"+q.id,unit:v.unit,skill:"grammar",mode:"fill",prompt:q.mask,answer:q.form,pt:q.pt,complete:q.es,explanation:v.note||"",lemma:v.lemma,origin:"Prática de gramática · Unidade "+v.unit});
    if(index<2){
     out.push({id:"s-"+q.id,unit:v.unit,skill:"sentence",mode:"open",prompt:q.pt,answer:q.es,pt:q.pt,lemma:v.lemma,origin:"Tradução de modelo contextual"});
    }
@@ -99,7 +99,7 @@ function grammarQuestions(){
   if(!getUnits().includes(ex.unit)||!/(verbo|conjuga|presente|imperativo|ser, estar|ser, estar, hay|irregulares|gustar|pronome|gerúndio)/i.test(ex.title))continue;
   if(!["fill","choice"].includes(ex.kind))continue;
   ex.items.forEach((item,i)=>{if(!item.prompt||!item.answer)return;
-   out.push({id:"gram-wb-"+ex.id+"-"+i,unit:ex.unit,skill:"grammar",mode:item.options?.length?"choice":"fill",prompt:item.prompt,answer:item.answer,options:item.options||[],pt:"Gramática · "+ex.title,complete:item.prompt,origin:"Caderno interativo adaptado"});
+   out.push({id:"gram-wb-"+ex.id+"-"+i,unit:ex.unit,skill:"grammar",mode:item.options?.length?"choice":"fill",prompt:item.prompt,answer:item.answer,options:item.options||[],pt:"Gramática · "+ex.title,complete:item.prompt,origin:"Exercícios do caderno"});
   });
  }
  // Unidade 10 revisa comunicação e produção. Inclua construção contextual de respostas próprias.
@@ -118,7 +118,7 @@ function comprehensionQuestions(){
   const others=selectedScenes().flatMap(x=>x.turns.map(y=>y.pt)).filter(x=>x&&norm(x)!==norm(t.pt)&&!distractors.includes(x));
   const pool=[...distractors,...others].filter((x,i,a)=>a.findIndex(y=>norm(y)===norm(x))===i);
   let options=[t.pt,...rand(pool).slice(0,3)];
-  out.push({id:"l-"+s.id+"-"+i,unit,skill:"listening",mode:"listen",prompt:t.q,answer:t.pt,pt:t.pt,options:rand(options),origin:s.title,explanation:"Ouça sem ler. Tradução original do diálogo adaptado."});
+  out.push({id:"l-"+s.id+"-"+i,unit,skill:"listening",mode:"listen",prompt:t.q,answer:t.pt,pt:t.pt,options:rand(options),origin:s.title,explanation:"Ouça sem ler. Escute antes de ler a tradução."});
  }
  }
  return out;
@@ -203,7 +203,7 @@ function collectGrade(grade){
 function diagnosticResult(record){
  let aggregateSkill=aggregate([record],"skill"),aggregateUnit=aggregate([record],"unit");
  let hardest=Object.entries(aggregateUnit).sort((a,b)=>(a[1].earned/a[1].possible)-(b[1].earned/b[1].possible));
- return '<div class="coach-wrap">'+intro("DIAGNÓSTICO CONCLUÍDO","Seu mapa de estudos","Pontuações estimadas, combinando respostas objetivas e autoavaliação. Use o resultado para planejar a próxima prática.")+
+ return '<div class="coach-wrap">'+intro("DIAGNÓSTICO CONCLUÍDO","Seu mapa de estudos","Veja seus resultados por habilidade e por unidade. Use as sugestões para decidir o que estudar depois.")+
  '<div class="grid three coach-result-summary"><div class="card stat"><span class="stat-label">Recuperação estimada</span><div class="value">'+Math.round(record.score*100)+'%</div></div><div class="card stat"><span class="stat-label">Respostas avaliadas</span><div class="value">'+record.answers.length+'</div></div><div class="card stat"><span class="stat-label">Unidades</span><div class="value">'+record.units.length+'</div></div></div>'+
  '<div class="coach-columns"><section class="card coach-config"><h2>Resultado por habilidade</h2>'+statsBars(aggregateSkill)+'<h2 style="margin-top:22px">O que praticar agora</h2>'+nextSteps(aggregateSkill)+'</section>'+
  '<section class="card coach-config"><h2>Resultado por unidade</h2>'+hardest.map(([u,r])=>{
@@ -252,7 +252,7 @@ function conversationsHome(){
  '<button class="btn primary coach-main-btn" data-act="coach-convo-start">Começar conversa</button></section>'+
  '<section class="card coach-history"><h2>Como evoluir</h2>'+
  '<div class="coach-levels"><div><strong>1. Com apoio</strong><p>Leia a tradução, fale sua resposta e confira o exemplo.</p></div><div><strong>2. Com menos apoio</strong><p>Responda sem tradução direta. Se travar, abra a pista.</p></div><div><strong>3. Autonomia</strong><p>Ouça a pergunta e responda sem depender da tela.</p></div></div>'+
- '<p class="muted small">As perguntas dos cenários são preparadas. As respostas digitadas são comparadas a modelos, mas não interpretadas por IA. Avalie se o que disse faz sentido.</p>'+
+ '<p class="muted small">Primeiro tente responder naturalmente. Depois compare sua resposta com os exemplos e avalie se conseguiu se comunicar.</p>'+
  '<h2>Seu histórico</h2><p class="muted small">'+total+' conversa(s) registrada(s)</p>'+
  (state.conversationHistory.length?state.conversationHistory.slice(-8).reverse().map(h=>'<div class="coach-history-line"><span>'+format(h.date)+' · '+esc(h.sceneTitle)+'<small>'+h.turns.length+' turnos · '+esc(h.level)+'</small></span><strong>'+Math.round(h.score*100)+'%</strong></div>').join(""):'<p class="muted">Sua primeira conversa aparecerá aqui.</p>')+
  '</section></div></div>';
@@ -274,7 +274,7 @@ function convoStep(){
  '<div class="row wrap coach-dialogue-controls"><button class="btn secondary sm" data-act="coach-convo-mic">🎤 Microfone</button>'+(conversation.stage==="answer"?'<button class="btn secondary sm" data-act="coach-convo-spoke">'+(conversation.spoke?"✓ Resposta oral registrada":"✓ Respondi em voz alta")+'</button>':"")+
  (conversation.stage==="answer"?'<button class="btn primary" data-act="coach-convo-compare">Conferir modelo</button><button class="btn secondary" data-act="coach-convo-giveup">Não sei · ver exemplo</button>':
  '<div class="coach-conversation-feedback"><div class="eyebrow">RESPOSTAS POSSÍVEIS</div>'+turn.examples.map((s,i)=>'<div class="coach-conversation-example"><span>'+String(i+1)+'.</span><strong lang="es">'+esc(s)+'</strong><button class="btn secondary sm" data-act="coach-convo-example" data-index="'+i+'">🔊</button></div>').join("")+
- '<p class="muted small">Outras respostas podem estar corretas. Use sua própria avaliação; o microfone só transcreve, não avalia pronúncia.</p>'+
+ '<p class="muted small">Há várias formas de responder. Compare com os exemplos e marque como foi sua lembrança.</p>'+
  '<div class="coach-grade-options"><button class="coach-grade" data-act="coach-convo-grade" data-grade="again">Precisei da resposta</button><button class="coach-grade" data-act="coach-convo-grade" data-grade="hard">Consegui com esforço</button><button class="coach-grade" data-act="coach-convo-grade" data-grade="good">Respondi sozinho</button></div></div>')+
  '</div></section></div>';
 }
@@ -302,7 +302,7 @@ function convoFinished(record){
  '<p>Você avaliou '+record.turns.length+' falas. '+difficult.length+' precisam de reforço.</p>'+
  '<div class="row wrap"><button class="btn primary" data-act="coach-convo-again">Repetir a situação</button>'+
  '<button class="btn secondary" data-act="coach-convo-weak">Treinar só as difíceis</button><button class="btn secondary" data-act="coach-convo-home">Escolher outra conversa</button></div>'+
- '<p class="muted small">Indicador baseado em autoavaliação e quantidade de apoio utilizada, não em interpretação automática das respostas.</p></section></div>';
+ '<p class="muted small">Seu resultado considera como você avaliou suas respostas e quantas pistas precisou consultar.</p></section></div>';
 }
 function conversationsPage(){
  if(chosenResult?.convo)return convoFinished(chosenResult.convo);
