@@ -15,9 +15,12 @@ Site esperado: https://natanaelscampos.github.io/habla-a1/
 - O primeiro acesso com internet instala o cache offline. Recursos de fala podem depender das vozes/permissões/conexão do dispositivo.
 
 ## Estrutura
-- `index.html` — plataforma integrada com treino, conjugação, simulações e exercícios do caderno adaptado.
+- `index.html` — estrutura da página e carregamento ordenado dos arquivos.
+- `assets/` — estilos, bancos de conteúdo e lógica da aplicação, publicados junto do HTML.
 - `manifest.webmanifest` — instalação do PWA.
 - `sw.js` — cache offline.
 - `icon-*.png` — ícones do aplicativo.
+
+Não é necessário um build para o Pages. Os caminhos permanecem relativos a `/habla-a1/`. Publique `assets/` junto dos demais arquivos; `npm run check:site` verifica referências, scripts e cache offline. O workflow **Verificar aplicativo** executa as verificações em pushes e pull requests, mantendo o modo de publicação por branch. Ele informa falhas; esse modo do Pages não espera o workflow de verificação para publicar.
 
 Material de estudo baseado no Frecuencias A1. O caderno interativo é adaptado; não reproduz integralmente os PDFs, imagens ou áudios da editora.

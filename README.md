@@ -33,7 +33,12 @@ A seção **Revisão Inteligente** permite ativar notificações locais e escolh
 - A referência pedagógica é o Frecuencias A1 (Libro del estudiante e Libro de ejercicios), sem afiliação com a editora
 
 ## Estrutura do projeto
-- `index.html`: aplicativo integrado
+- `index.html`: estrutura da página e carregamento dos arquivos
+- `assets/css/app.css`: estilos principais, responsividade e acessibilidade
+- `assets/js/content.js`: estruturas, exemplos e cenários existentes
+- `assets/js/verbs.js`: banco de verbos e contextos
+- `assets/js/workbook.js`: banco das atividades do caderno
+- `assets/js/app.js`: navegação, telas, progresso e backup
 - `study-lab.js` e `study-lab.css`: revisão crescente e seleção de unidades
 - `doubts.js` e `doubts.css`: caderno pessoal de dúvidas, notas da aula e filtros
 - `quick-doubt.js` e `quick-doubt.css`: popup de dúvida global, integrado ao caderno
@@ -79,10 +84,14 @@ O cache dos MP3 é separado dos arquivos do aplicativo. Atualizações preservam
 
 O [relatório de auditoria do áudio](docs/AUDIO-AUDIT.md) registra a arquitetura, os problemas encontrados, a cobertura das gravações e os limites da validação.
 
+O [guia de desenvolvimento](docs/DEVELOPMENT.md) explica a estrutura dos arquivos, os cuidados com o PWA e a validação para GitHub Pages. A [avaliação do Azure Speech](docs/AZURE-SPEECH.md) descreve quando vale a pena usá-lo para gerar gravações da turma.
+
 Os testes não alteram o site publicado nem os dados dos estudantes:
 
 ```sh
 npm ci
+npm run check:site
+npm run format:check
 npm test
 python tests/test_generate_audio.py -v
 python tools/generate_audio.py --validate-only

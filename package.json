@@ -3,9 +3,13 @@
   "private": true,
   "scripts": {
     "test": "node --test tests/*.test.cjs",
-    "test:browser": "node tests/browser.cjs"
+    "test:browser": "node tests/browser.cjs",
+    "check:site": "node tools/check-site.cjs",
+    "format": "prettier --write index.html \"assets/**/*.{css,js}\"",
+    "format:check": "prettier --check index.html \"assets/**/*.{css,js}\""
   },
   "devDependencies": {
-    "playwright": "1.62.0"
+    "playwright": "1.62.0",
+    "prettier": "3.10.1"
   }
 }

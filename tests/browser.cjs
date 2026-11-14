@@ -55,13 +55,17 @@ async function testCase(base,config){
    finally{URL.revokeObjectURL(url);}
   },Object.values(catalog.clips)[0]);
   const unsupported=!mediaCapability.supported;
+  if(config.engine!=='webkit')assert.equal(unsupported,false,'Este navegador precisa reproduzir MP3 nativamente para validar o áudio');
   await page.evaluate(()=>{const NativeAudio=window.Audio;window.__mediaErrors=[];window.Audio=function(...args){const audio=new NativeAudio(...args);audio.addEventListener('error',()=>__mediaErrors.push({code:audio.error?.code,message:audio.error?.message}));window.__lastAudio=audio;return audio;};});
   const inventory=await page.evaluate(clips=>({structures:STRUCTURES.length,examples:allCards().length,verbs:VERB_BANK.verbs.length,combinations:CONJ_COUNTS.sentences,exercises:BOOK_EX.length,units:BOOK_UNITS.length,scenes:SCENARIO_SETS.length,turns:SCENARIO_SETS.reduce((n,s)=>n+s.turns.length,0),workbookAudio:BOOK_EX.flatMap(e=>e.items).filter(i=>i.audio).length,workbookRecorded:BOOK_EX.flatMap(e=>e.items).filter(i=>i.audio&&clips[i.audio]).length,sceneRecorded:SCENARIO_SETS.flatMap(s=>s.turns).filter(t=>clips[t.q]).length}),catalog.clips);
   for(const name of ['home','lab','diagnostic','dialogues','library','practice','reviews','board','doubts','scenarios','verbs','workbook','progress']){
    await nav(page,name);
    assert.ok((await page.locator('#app h1').innerText()).trim());
    const dimensions=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
-   if(dimensions.scroll>dimensions.width+1)overflows.push({page:name,...dimensions});
+   if(dimensions.scroll>dimensions.width+1){
+    const elements=await page.locator('#app *').evaluateAll(nodes=>nodes.filter(n=>n.getBoundingClientRect().right>innerWidth+1).slice(-8).map(n=>({tag:n.tagName,className:n.className,right:n.getBoundingClientRect().right,text:n.textContent.slice(0,60)})));
+    overflows.push({page:name,...dimensions,elements});
+   }
   }
   checks.push('13 telas navegadas pela interface');
   await page.locator('#voiceSpeed').selectOption('0.7');
@@ -133,6 +137,7 @@ async function testCase(base,config){
   checks.push(unsupported?'Range 206 online correto; limitações de recarga e mídia offline registradas':'PWA recarrega offline; MP3 toca offline; Range 206 de dois bytes; dados preservados');
   await page.evaluate(()=>HablaAudio.stop());await page.screenshot({path:path.join(results,config.name+'.png'),fullPage:true});
   assert.deepEqual(errors,[]);
+  assert.deepEqual(overflows,[],'As telas não devem ultrapassar a largura do aparelho');
   const report={name:config.name,version:browser.version(),viewport:config.viewport,mediaCapability,onlineRange,offlineReload,offlineRange,checks,inventory,decoding,overflows,errors};console.log(JSON.stringify(report));return report;
  }catch(error){
   const failure=await page.evaluate(()=>({url:location.href,status:document.getElementById('audioStatus')?.textContent,toast:document.getElementById('toast')?.textContent,mediaErrors:window.__mediaErrors,audio:window.__lastAudio?{src:__lastAudio.src,paused:__lastAudio.paused,readyState:__lastAudio.readyState,error:__lastAudio.error?{code:__lastAudio.error.code,message:__lastAudio.error.message}:null,support:__lastAudio.canPlayType('audio/mpeg')}:null}));

@@ -47,7 +47,7 @@ test('Cache API indisponível ainda permite MP3 online',async()=>{
  assert.equal((await h.request()).status,200);assert.equal(h.network.length,1);
 });
 test('catálogo offline e HTTP 503 usam cópia instalada',async()=>{
- const h=setup();const cache=await h.caches.open('habla-a1-app-v10-audio');await cache.put('./audio/index.json',new Response('{"clips":{}}'));
+ const h=setup();const cache=await h.caches.open('habla-a1-app-v11-structure');await cache.put('./audio/index.json',new Response('{"clips":{}}'));
  for(const fetch of [async()=>{throw Error('offline');},async()=>new Response('unavailable',{status:503})]){
   h.context.fetch=fetch;let promise;h.handlers.fetch({request:new Request(base+'audio/index.json'),respondWith:p=>promise=p});
   assert.equal(await (await promise).text(),'{"clips":{}}');
