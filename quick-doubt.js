@@ -1,4 +1,4 @@
-/* Captura de dúvida em qualquer tela — popup independente do conteúdo atual. */
+/* Formulário de dúvidas com retorno à atividade anterior. */
 (function(){
 "use strict";
 let open=false, returnFocus=null, origin=null;
