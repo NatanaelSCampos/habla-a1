@@ -1,5 +1,5 @@
 /* Habla A1 · Cache do aplicativo separado dos MP3 já ouvidos. */
-const CACHE='habla-a1-app-v11-structure';
+const CACHE='habla-a1-app-v12-azure';
 const AUDIO_CACHE='habla-a1-audio-v1';
 const ASSETS=['./','./index.html','./assets/css/app.css','./assets/js/content.js','./assets/js/verbs.js','./assets/js/workbook.js','./assets/js/app.js','./manifest.webmanifest','./study-lab.css','./study-lab.js','./doubts.css','./doubts.js','./coach.css','./coach.js','./quick-doubt.css','./quick-doubt.js','./audio-player.js','./audio/index.json','./icon-192.png','./icon-512.png','./icon-maskable-512.png'];
 const clipPath=new URL('./audio/clips/',self.registration.scope).pathname;

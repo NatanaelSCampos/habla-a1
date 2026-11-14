@@ -44,7 +44,7 @@ O Prettier formata o HTML e os arquivos de `assets/`. O verificador do site anal
 
 ## Atualizações e preservação dos dados
 
-O cache da aplicação passa a `habla-a1-app-v11-structure` e inclui todos os arquivos extraídos. O cache de áudio continua `habla-a1-audio-v1`, preservando gravações baixadas. A instalação só ativa o novo service worker depois de baixar os arquivos necessários.
+O cache da aplicação usa `habla-a1-app-v12-azure` e inclui todos os arquivos extraídos. O cache de áudio continua `habla-a1-audio-v1`, preservando gravações baixadas. A instalação só ativa o novo service worker depois de baixar os arquivos necessários. Os MP3 do Azure têm URLs próprias, identificadas por provedor, voz e hash do perfil, sem sobrescrever os MP3 anteriores.
 
 Quando criar um arquivo exigido pela aplicação, inclua-o em `ASSETS` no `sw.js` e nas referências do HTML quando necessário. Ao publicar uma nova versão do código, atualize a versão do cache da aplicação para instalar um conjunto coerente de HTML, estilos e scripts. Preserve o cache de áudio e as chaves dos dados dos alunos.
 

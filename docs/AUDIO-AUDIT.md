@@ -1,5 +1,17 @@
 # Auditoria do áudio e estado técnico do Habla A1
 
+## Atualização: migração autorizada para Azure Speech
+
+A voz principal passou a **es-MX-DaliaNeural**. O catálogo foi ampliado de 448 para **5.141 frases únicas**, extraídas dos bancos existentes, sem alterar respostas, IDs, chaves de armazenamento ou dados dos alunos. A seleção possui 132.868 caracteres de texto; os MP3 somam 86.032.029 bytes. As 4.320 combinações de verbos, os diálogos e os 20 textos de escuta do caderno estão cobertos.
+
+O gerador usa credenciais locais protegidas, SDK oficial, lotes de até 48 frases e cortes a partir dos bookmarks reais. O catálogo anterior fica ativo durante a geração. Os arquivos novos têm URLs específicas da voz e do perfil; os 448 MP3 anteriores e o cache persistente de áudio foram preservados. A aplicação usa o cache `habla-a1-app-v12-azure`.
+
+Validação desta migração: **31 testes Node e 7 testes Python aprovados**. Os 5.141 MP3 foram decodificados, sem falhas, arquivos silenciosos ou canais incorretos, com duração entre 1,565 e 13,015 segundos. Chromium desktop repetiu a decodificação do catálogo através do service worker. Chromium com emulação móvel e Edge aprovaram reprodução online/offline, Range 206, navegação das 13 telas, revisão com unidades 2/5/7, dúvidas rápidas, conversação, diagnóstico e backup com dados anteriores. Não houve excesso horizontal nem erros de JavaScript nesses perfis.
+
+O `.env` está ignorado pelo Git e a chave não foi encontrada nos arquivos preparados para publicação. Nenhuma chave foi cadastrada no GitHub por esta tarefa. O workflow Azure é manual; novas gerações no Actions exigem os secrets indicados no README. Testes em Android/iPhone reais e a conferência pedagógica da pronúncia pelo professor continuam necessários. A qualidade acústica não foi comparada auditivamente com o Kokoro nesta migração.
+
+O restante do relatório registra a auditoria inicial e as correções que antecederam esta atualização.
+
 Auditoria de 14 de novembro de 2026, inicialmente sobre o commit `7133d25`, atualizada após a publicação. O aplicativo existente foi mantido. As correções de concorrência, recuperação e cache foram publicadas no commit `e06930a`. O workflow gerou as 248 gravações restantes sem falhas e publicou o catálogo completo de 448 frases no commit `846b25d`. A confirmação em Android e iPhone reais e a aprovação pedagógica da pronúncia continuam pendentes.
 
 ## Arquitetura e dados existentes

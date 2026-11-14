@@ -1,4 +1,22 @@
-# Avaliação do Azure Speech para o Habla
+# Azure Speech no Habla
+
+## Migração autorizada
+
+O responsável autorizou gerar o banco completo com Azure Speech usando as credenciais locais. A voz escolhida é **es-MX-DaliaNeural**, mantendo a preferência pedagógica por espanhol latino-americano. O gerador fixa essa variante sem alterar a configuração `es-ES` do `.env` usado pelo responsável.
+
+A seleção completa reúne **5.141 frases únicas e 132.868 caracteres de texto**. Ela inclui biblioteca, as 4.320 combinações contextuais dos verbos, conversação, revisão, frases de apoio, exemplos gramaticais e os 20 textos de escuta do caderno. Quatro frases da seleção anterior são preservadas como `extraPhrases`. `tools/collect-audio-sources.cjs` extrai o conteúdo dos bancos reais e usa a função original `verbalSentence`, sem modificar respostas ou IDs.
+
+`tools/generate-azure-audio.cjs` usa o SDK oficial para gerar até 48 frases por pedido. Os marcadores de tempo separam o PCM em gravações individuais, codificadas com FFmpeg a 24 kHz, mono e 48 kbit/s. Isso reduz as requisições e evita depender da API assíncrona Batch synthesis. A [documentação de eventos e bookmarks](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/how-to-speech-synthesis) descreve os offsets usados para os cortes.
+
+O serviço pode omitir o marcador após a última fala. Os cortes usam os inícios confirmados de cada frase e da seguinte; a última termina no fim do áudio completo. Marcadores ausentes ou fora de ordem impedem a ativação. O catálogo intermediário é recuperável e o ativo só muda por `--activate` com todas as frases presentes. `tools/verify-audio.cjs --pending` decodifica os MP3 reais em Chromium para conferir cobertura, sinal, canais e duração antes dessa ativação.
+
+Os nomes dos MP3 incluem provedor, voz e hash do perfil. A atualização mantém o cache de áudio e os arquivos anteriores do Kokoro, sem reutilizar suas URLs. As gravações continuam sendo baixadas conforme o uso, mantendo a instalação inicial pequena. Frases pessoais e conteúdo novo ainda sem gravação usam a alternativa do aparelho.
+
+O `.env` é ignorado pelo Git e não é carregado pelo app. Nenhum segredo foi enviado ao GitHub nesta geração local. Futuras gerações no Actions exigem os secrets indicados no README; o workflow é manual para evitar cobranças a cada push. Ouvir um arquivo no Pages não chama o Azure.
+
+A escolha regional não substitui a conferência pedagógica da pronúncia pelo professor nem testes em aparelhos reais. A avaliação abaixo registra a situação anterior à migração.
+
+## Avaliação anterior à migração
 
 O Azure Speech é tecnicamente compatível com o Habla e vale uma comparação de voz, especialmente porque já é utilizado no outro projeto do responsável. Para esta turma, a recomendação é manter o aplicativo no GitHub Pages e avaliar o Azure como gerador prévio de MP3. A adoção depende de uma melhora perceptível de pronúncia e entonação em relação à voz atual.
 
@@ -62,4 +80,4 @@ Uma troca deve identificar provedor, voz e versão de geração no catálogo e n
 
 Manter o Kokoro atende a opção gratuita já publicada. Testar o Azure faz sentido para buscar uma voz mexicana com pronúncia didática mais adequada e aproveitar uma ferramenta já conhecida. A configuração indicada continua sendo geração prévia e distribuição dos MP3 pelo Pages. Uma dependência de síntese em tempo real acrescentaria custos por uso, conectividade e autenticação sem resolver uma necessidade atual da turma.
 
-Nenhum recurso Azure foi criado, nenhuma credencial foi consultada e nenhuma geração cobrável foi executada nesta avaliação. A voz atual e as 448 gravações permanecem disponíveis enquanto a comparação pedagógica não for aprovada.
+Na avaliação inicial, nenhum recurso Azure foi criado e nenhuma geração cobrável foi executada. Posteriormente, o responsável forneceu as credenciais locais e autorizou a geração completa descrita no início deste documento. Os 448 MP3 anteriores permanecem disponíveis para compatibilidade e recuperação.

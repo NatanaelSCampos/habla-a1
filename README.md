@@ -68,13 +68,24 @@ O botão **Anotar dúvida** permanece disponível em todas as páginas e abre um
 O áudio do Habla funciona em dois níveis:
 
 1. Se a frase tiver MP3 neural no catálogo `audio/index.json`, o aplicativo reproduz esse arquivo. Isso não depende de voz instalada no dispositivo.
-2. Para frases ainda não gravadas, usa como alternativa a leitura de voz do aparelho. Algumas combinações dinâmicas dependem dessa alternativa até a biblioteca ser ampliada.
+2. Para frases pessoais e conteúdos novos ainda não gravados, usa como alternativa a leitura de voz do aparelho.
 
-A geração é feita pelo workflow **Gerar áudio em espanhol**, usando Kokoro-82M com uma voz em espanhol. É um modelo aberto, sem cobrança por reprodução dos arquivos. O modelo não roda no celular e não é distribuído com o PWA.
+A biblioteca usa **Azure Speech**, com a voz mexicana **es-MX-DaliaNeural**. São 5.141 frases únicas: biblioteca, 4.320 combinações contextuais dos verbos, diálogos, revisão, frases de apoio, exemplos especiais e os 20 textos de escuta do caderno. A geração ocorre previamente; ouvir um MP3 no Pages não faz uma chamada ao Azure. Os arquivos do Kokoro anterior foram conservados para compatibilidade e recuperação.
 
-Para ampliar a biblioteca, abra [GitHub Actions → Gerar áudio em espanhol](https://github.com/NatanaelSCampos/habla-a1/actions/workflows/generate-audio.yml), selecione **Run workflow**, escolha a quantidade de novos áudios e execute. Os arquivos são adicionados automaticamente a `audio/clips/` e ao catálogo quando a execução termina com sucesso. É importante conferir a qualidade de pronúncia, especialmente em frases curtas e nomes próprios.
+Para ampliar a biblioteca, atualize a seleção com `npm run audio:sources`. O workflow [Gerar áudio em espanhol com Azure](https://github.com/NatanaelSCampos/habla-a1/actions/workflows/generate-audio.yml) é **manual** para evitar geração cobrável em cada push. Ele precisa dos secrets `AZURE_SPEECH_KEY` e `AZURE_SPEECH_ENDPOINT` (ou `AZURE_SPEECH_REGION`). Execute **Run workflow** com limite suficiente para concluir as pendências; a publicação só ativa um catálogo completo e validado. Confira com o professor a pronúncia, principalmente de nomes próprios e frases curtas.
 
-`audio/sources.json` contém as frases previstas. `tools/generate_audio.py` permite gerar os mesmos arquivos localmente, caso se deseje usar uma máquina própria.
+Para geração local, copie `.env.example` para `.env`, configure a chave e o endpoint e execute:
+
+```sh
+npm ci
+npx playwright install chromium
+npm run audio:sources
+npm run audio:generate
+node tools/verify-audio.cjs --pending
+node tools/generate-azure-audio.cjs --activate
+```
+
+O `.env` é ignorado pelo Git e nunca é carregado pelo aplicativo. `tools/generate_audio.py` permanece disponível para manutenção do gerador Kokoro anterior e validação compatível do catálogo.
 
 > Os MP3 disponíveis podem funcionar offline **depois de reproduzidos e armazenados no cache**. Não é garantido que toda a biblioteca esteja disponível sem internet.
 
@@ -101,4 +112,4 @@ npm run test:browser
 
 O Playwright serve o aplicativo em `/habla-a1/`, usa perfis isolados e grava os resultados em `test-results/`. A configuração inclui Edge (`msedge`), que precisa estar instalado; `BROWSERS` permite selecionar os casos `chromium-desktop`, `chromium-mobile`, `webkit-mobile` e `edge-desktop`. A emulação móvel não substitui testes em celulares reais. Limitações nativas do WebKit para Windows são identificadas separadamente nos resultados.
 
-O gerador aceita `--max-new 0` para reconciliar o catálogo sem baixar o modelo. Arquivos ausentes ou incompletos deixam de contar como gravações disponíveis. A geração usa arquivos temporários e salva o catálogo após cada sucesso; qualquer falha de síntese encerra o comando com erro. O workflow guarda um artefato por sete dias para recuperar MP3 em caso de interrupção ou conflito na publicação. O limite padrão de 450 permite concluir a seleção inicial de 448 frases em uma execução, gerando apenas as pendentes.
+O gerador Azure aceita `--dry-run` para estimar a seleção sem chamar o serviço e `--max-new` para limitar uma execução. Ele reutiliza os arquivos concluídos e gera lotes de até 48 frases por pedido, separadas pelos marcadores reais do Speech SDK. MP3 e catálogo são escritos de forma atômica. O catálogo ativo só muda após a validação de todas as frases. Voz, formato e perfil participam dos nomes dos arquivos, evitando que um cache antigo sirva a voz anterior. O workflow guarda um artefato por sete dias para recuperação após interrupção ou conflito na publicação.

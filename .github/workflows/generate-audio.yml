@@ -1,24 +1,13 @@
-name: Gerar áudio em espanhol
+name: Gerar áudio em espanhol com Azure
 
 on:
   workflow_dispatch:
     inputs:
       max_clips:
-        description: 'Quantidade de novos áudios nesta execução'
+        description: 'Máximo de novas frases; 6000 cobre o banco atual'
         required: true
-        default: '450'
-        type: choice
-        options:
-          - '20'
-          - '80'
-          - '200'
-          - '450'
-  push:
-    branches: [main]
-    paths:
-      - 'audio/sources.json'
-      - 'tools/generate_audio.py'
-      - '.github/workflows/generate-audio.yml'
+        default: '6000'
+        type: string
 
 permissions:
   contents: write
@@ -32,7 +21,7 @@ jobs:
   synthesize:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 90
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
@@ -40,25 +29,32 @@ jobs:
           persist-credentials: true
           fetch-depth: 0
           ref: main
-      - name: Preparar Python
-        uses: actions/setup-python@v5
+      - name: Preparar Node
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
+          node-version: '24'
+          cache: npm
       - name: Preparar sintetizador
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq espeak-ng ffmpeg
-          python -m pip install --upgrade pip
-          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install "kokoro==0.9.4" soundfile
+          sudo apt-get install -y -qq ffmpeg
+          npm ci
+          node tools/collect-audio-sources.cjs --check
       - name: Gerar arquivos MP3
         env:
-          HF_HUB_DISABLE_TELEMETRY: '1'
-          TOKENIZERS_PARALLELISM: 'false'
-          LIMIT: ${{ inputs.max_clips || '450' }}
+          AZURE_SPEECH_KEY: ${{ secrets.AZURE_SPEECH_KEY }}
+          AZURE_SPEECH_REGION: ${{ secrets.AZURE_SPEECH_REGION }}
+          AZURE_SPEECH_ENDPOINT: ${{ secrets.AZURE_SPEECH_ENDPOINT }}
+          LIMIT: ${{ inputs.max_clips }}
+          FFMPEG_PATH: /usr/bin/ffmpeg
         run: |
-          python tools/generate_audio.py --max-new "$LIMIT"
-          python tools/generate_audio.py --validate-only
+          node tools/generate-azure-audio.cjs --max-new "$LIMIT"
+      - name: Validar áudios e ativar catálogo completo
+        run: |
+          npx playwright install --with-deps chromium
+          node tools/verify-audio.cjs --pending
+          node tools/generate-azure-audio.cjs --activate
+          node tools/check-site.cjs
       - name: Guardar arquivos para recuperação
         if: always()
         uses: actions/upload-artifact@v4
@@ -66,8 +62,10 @@ jobs:
           name: audio-gerado-${{ github.run_id }}
           path: |
             audio/index.json
+            audio/azure-index.pending.json
             audio/clips/*.mp3
             audio/last-errors.json
+            test-results/audio-verification.json
           retention-days: 7
       - name: Publicar áudio gerado
         run: |
@@ -77,7 +75,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "Nenhum MP3 novo para publicar."
           else
-            git commit -m "audio: adicionar voz neural em espanhol"
+            git commit -m "audio: adicionar voz mexicana do Azure Speech"
             for attempt in 1 2 3; do
               git fetch origin main
               if ! git rebase origin/main; then

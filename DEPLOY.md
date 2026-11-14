@@ -24,3 +24,9 @@ Site esperado: https://natanaelscampos.github.io/habla-a1/
 Não é necessário um build para o Pages. Os caminhos permanecem relativos a `/habla-a1/`. Publique `assets/` junto dos demais arquivos; `npm run check:site` verifica referências, scripts e cache offline. O workflow **Verificar aplicativo** executa as verificações em pushes e pull requests, mantendo o modo de publicação por branch. Ele informa falhas; esse modo do Pages não espera o workflow de verificação para publicar.
 
 Material de estudo baseado no Frecuencias A1. O caderno interativo é adaptado; não reproduz integralmente os PDFs, imagens ou áudios da editora.
+
+## Gerar áudio com Azure
+
+A publicação atual já contém os MP3; o Pages não precisa de acesso ao Azure nem de chaves. A geração local usa o `.env`, ignorado pelo Git. A voz do Habla é `es-MX-DaliaNeural`; uma configuração `es-ES` usada em outro projeto não altera essa escolha.
+
+Para novas gerações no Actions, configure **Settings → Secrets and variables → Actions** com `AZURE_SPEECH_KEY` e `AZURE_SPEECH_ENDPOINT`, ou com `AZURE_SPEECH_KEY` e `AZURE_SPEECH_REGION`. Nunca inclua essas chaves nos arquivos do site. O workflow de áudio é manual, gera somente pendências e ativa apenas catálogos completos após decodificar todos os MP3. Um limite insuficiente mantém o catálogo ativo e guarda os arquivos concluídos no artefato para recuperação.
