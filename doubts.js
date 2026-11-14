@@ -1,5 +1,5 @@
-/* Habla A1 — Caderno de Dúvidas (integrado, sem iframe).
-   Persistência na estrutura data do Habla: exportação/importação de backup incluídas. */
+/* Habla A1 — Caderno de Dúvidas.
+   Anotações vinculadas ao progresso de cada estudante. */
 (function() {
 "use strict";
 var activeId=null, formOpen=false, focusOnNext=false, teacherMode=false;
@@ -71,7 +71,7 @@ function form(){
  '<label for="doubtAnswer">O que o professor explicou? (pode preencher depois)</label>'+
  '<textarea id="doubtAnswer" name="teacherAnswer" rows="5" maxlength="8000" placeholder="Registre a explicação com suas palavras, exemplos e correções do professor.">'+esc(values.teacherAnswer||"")+'</textarea>'+
  '<div class="doubt-form-actions"><button class="btn primary" type="submit">'+(d?"Salvar alterações":"Salvar dúvida")+'</button><button class="btn secondary" type="button" data-act="doubt-cancel">Cancelar</button></div>'+
- '<p class="muted tiny">Anotações pessoais salvas neste dispositivo e incluídas no backup JSON. Criar ou editar uma dúvida não conta como prática para a sequência diária.</p>'+
+ '<p class="muted tiny">Suas anotações ficam salvas neste aparelho e podem ser guardadas com o backup. Criar ou editar uma dúvida não conta como prática para a sequência diária.</p>'+
  '</form></section>';
 }
 function screen(){
