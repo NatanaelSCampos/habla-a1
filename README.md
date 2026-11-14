@@ -11,6 +11,9 @@ https://natanaelscampos.github.io/habla-a1/
 - Simulações de conversas e situações do cotidiano
 - Caderno interativo organizado nas dez unidades do *Frecuencias A1*
 - **Caderno de Dúvidas** integrado: registre perguntas por unidade, use uma lista de pendências na aula, anote o que o professor explicou, marque como respondida ou reabra; tudo incluído no backup local.
+- **Anotar dúvida em qualquer tela**: botão flutuante abre um popup sem perder o exercício; cria uma pendência no Caderno e mantém rascunhos locais.
+- **Diagnóstico por habilidades**: teste flexível entre quaisquer unidades 1–10, com conjugação, vocabulário, escuta, construção e conversação; resultados por unidade/habilidade, recuperação ativa e sugestões de reforço.
+- **Conversação progressiva**: aproveita 20 cenários e 103 interações originais do Habla, com níveis guiado/intermediário/desafio, resposta oral, comparação com modelos, histórico e prática das falas difíceis.
 - **Revisão Inteligente**: escolha qualquer combinação das unidades 1 a 10, em qualquer dia
 - Modos: diagnóstico, conjugação, transformar frases, ditado, conversação, questões do caderno, revisão de dificuldades e misto
 - Autoavaliação da recuperação de memória, repetição espaçada e calendário de frequência
@@ -33,6 +36,8 @@ A seção **Revisão Inteligente** permite ativar notificações locais e escolh
 - `index.html`: aplicativo integrado
 - `study-lab.js` e `study-lab.css`: revisão crescente e seleção de unidades
 - `doubts.js` e `doubts.css`: caderno pessoal de dúvidas, notas da aula e filtros
+- `quick-doubt.js` e `quick-doubt.css`: popup de dúvida global, integrado ao caderno
+- `coach.js` e `coach.css`: diagnóstico por habilidades e conversação progressiva
 - `sw.js`: cache offline e abertura do aplicativo ao tocar em uma notificação
 - `manifest.webmanifest` e ícones: instalação PWA
 
@@ -42,3 +47,12 @@ A seção **Revisão Inteligente** permite ativar notificações locais e escolh
 - Backend de Web Push para avisos confiáveis com o app fechado
 
 As atualizações do GitHub Pages podem demorar um pouco para chegar a todos os dispositivos devido à publicação e ao cache do PWA.
+
+## Como funciona o diagnóstico
+O diagnóstico alterna questões objetivas (correção baseada em respostas esperadas) com produção livre e fala (autoavaliação). Você pode selecionar qualquer combinação de unidades, repetir avaliações e acompanhar as áreas de atenção. As pontuações são **indicadores de estudo**, não certificação nem avaliação formal de pronúncia.
+
+## Conversação progressiva
+As situações são roteirizadas; não há IA em tempo real analisando o que você disse. Compare sua resposta com modelos, indique se precisou de ajuda e pratique novamente os turnos difíceis. A fala pelo microfone depende de recursos e permissões do navegador.
+
+## Captura rápida de dúvidas
+O botão **Anotar dúvida** permanece disponível em todas as páginas e abre um formulário por cima da tela atual. Ao salvar, a pergunta fica **Pendente** no Caderno de Dúvidas, onde você pode registrar a explicação do professor, marcá-la como respondida e reabri-la. O formulário guarda rascunhos locais.
