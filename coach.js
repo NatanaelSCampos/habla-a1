@@ -20,7 +20,7 @@ const SCENE_UNIT={
 };
 const DEFAULT={units:[1,2,3],diagnosticLength:20,results:[],conversationHistory:[],sceneFilter:"all",sceneId:"professor",convoLevel:"guided",convoPractice:"all",showTranslations:true};
 let state;try{state={...DEFAULT,...JSON.parse(localStorage.getItem(KEY)||"{}")};}catch(e){state={...DEFAULT};}
-let test=null,conversation=null,chosenResult=null,editing=false;
+let test=null,conversation=null,chosenResult=null;
 const saveState=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){toast("Armazenamento indisponível. Exporte seu backup.");}};
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[¿?¡!.,;:]/g,"").replace(/\s+/g," ").trim();
@@ -94,6 +94,18 @@ function grammarQuestions(){
    }
   }
  }
+ // Questões de gramática do caderno adaptado — essenciais na Unidade 10, que revisa verbos anteriores.
+ for(const ex of BOOK_EX){
+  if(!getUnits().includes(ex.unit)||!/(verbo|conjuga|presente|imperativo|ser, estar|ser, estar, hay|irregulares|gustar|pronome|gerúndio)/i.test(ex.title))continue;
+  if(!["fill","choice"].includes(ex.kind))continue;
+  ex.items.forEach((item,i)=>{if(!item.prompt||!item.answer)return;
+   out.push({id:"gram-wb-"+ex.id+"-"+i,unit:ex.unit,skill:"grammar",mode:item.options?.length?"choice":"fill",prompt:item.prompt,answer:item.answer,options:item.options||[],pt:"Gramática · "+ex.title,complete:item.prompt,origin:"Caderno interativo adaptado"});
+  });
+ }
+ // Unidade 10 revisa comunicação e produção. Inclua construção contextual de respostas próprias.
+ if(getUnits().includes(10))for(const scene of selectedScenes().filter(x=>x.units.includes(10))){
+  scene.turns.forEach((turn,i)=>{if(turn.examples?.length&&turn.pt)out.push({id:"unit10-build-"+scene.id+"-"+i,unit:10,skill:"sentence",mode:"open",prompt:"Responda em espanhol: "+turn.pt,answer:turn.examples[0],pt:turn.pt,origin:"Revisão global · frase-modelo"});});
+ }
  return out;
 }
 function comprehensionQuestions(){
@@ -144,7 +156,7 @@ function startDiagnostic(){
  if(!state.units.length){toast("Selecione pelo menos uma unidade.");return;}
  let deck=balancedQuestions(state.diagnosticLength);
  if(!deck.length){toast("Nenhuma pergunta disponível para esta seleção.");return;}
- test={deck,index:0,answers:[],typed:"",checked:false,help:false,translate:false,createdAt:new Date().toISOString(),id:"diag-"+Date.now()};
+ test={deck,index:0,answers:[],typed:"",spoke:false,gaveUp:false,checked:false,help:false,translate:false,createdAt:new Date().toISOString(),id:"diag-"+Date.now()};
  chosenResult=null;sendRender();
 }
 function diagnosticCard(q){
@@ -154,8 +166,8 @@ function diagnosticCard(q){
  return '<div class="coach-progress"><div class="row between"><span>Questão '+(pos+1)+'/'+test.deck.length+'</span><button class="btn secondary sm" data-act="coach-stop">Encerrar</button></div><div class="progress-track"><div class="progress-fill" style="width:'+(100*pos/test.deck.length)+'%"></div></div></div>'+
  '<section class="card coach-question"><div class="row between wrap"><span class="chip">Unidade '+q.unit+' · '+esc(UNITS[q.unit-1])+'</span><span class="chip">'+esc(SKILLS.find(s=>s.id===q.skill).name)+'</span></div>'+prompt+
  (q.mode==="choice"||q.mode==="listen"?'<div class="coach-choices">'+q.options.map(x=>'<label class="coach-choice"><input type="radio" name="coachOption" value="'+esc(x)+'" '+(user===x?"checked":"")+' '+(test.checked?"disabled":"")+'><span>'+esc(x)+'</span></label>').join("")+'</div>':
- '<div class="coach-input"><label for="coachAnswer">'+(open?"Sua resposta em espanhol":"Complete a resposta")+'</label><textarea id="coachAnswer" class="textarea" rows="3" '+(test.checked?"readonly":"")+' placeholder="'+(open?"Tente dizer primeiro, depois digite ou use o microfone.":"Digite o que conseguiu lembrar.")+'">'+esc(user)+'</textarea>'+
- '<div class="row wrap"><button class="btn secondary sm" data-act="coach-mic">🎤 Falar no microfone</button></div></div>')+
+ '<div class="coach-input"><label for="coachAnswer">'+(q.skill==="speaking"||q.skill==="sentence"?"Sua resposta em espanhol":"Sua resposta")+'</label><textarea id="coachAnswer" class="textarea" rows="3" '+(test.checked?"readonly":"")+' placeholder="'+(open?"Tente dizer primeiro, depois digite ou use o microfone.":"Digite o que conseguiu lembrar.")+'">'+esc(user)+'</textarea>'+
+ '<div class="row wrap"><button class="btn secondary sm" data-act="coach-mic">🎤 Usar microfone</button>'+(open?'<button class="btn secondary sm" data-act="coach-spoke">'+(test.spoke?"✓ Resposta oral registrada":"✓ Respondi em voz alta")+'</button>':"")+'</div></div>')+
  '<div class="coach-question-help"><button class="btn secondary sm" data-act="coach-help">'+(test.help?"Ocultar dica":"Ver dica")+'</button>'+
  (isListening?'': '<button class="btn secondary sm" data-act="coach-translation">'+(test.translate?"Ocultar apoio":"Ver tradução/apoio")+'</button>')+'</div>'+
  (test.help?'<div class="coach-hint">'+esc(q.hint||(q.lemma?"Verbo: "+q.lemma:q.origin))+'</div>':"")+
@@ -174,9 +186,10 @@ function collectGrade(grade){
  let manualScore=grade==="good"?1:grade==="hard"?.5:0;
  let score=(correct===false)?0:manualScore;
  if(test.help||test.translate)score=Math.min(score,.5);
- if(!typed)score=0;
- test.answers.push({id:q.id,unit:q.unit,skill:q.skill,score,grade,correct,typed,answer:q.answer,usedHelp:test.help||test.translate,mode:q.mode});
- test.index++;test.typed="";test.checked=false;test.help=false;test.translate=false;
+ if(!typed&&!test.spoke)score=0;
+ if(test.gaveUp)score=0;
+ test.answers.push({id:q.id,unit:q.unit,skill:q.skill,score,grade,correct,typed,answer:q.answer,usedHelp:test.help||test.translate||test.gaveUp,oralOnly:!!test.spoke&&!typed,mode:q.mode});
+ test.index++;test.typed="";test.spoke=false;test.gaveUp=false;test.checked=false;test.help=false;test.translate=false;
  if(test.index===test.deck.length){
  let answers=test.answers,score=answers.reduce((sum,x)=>sum+x.score,0)/Math.max(1,answers.length);
  let record={id:test.id,date:new Date().toISOString(),units:getUnits().slice(),score,answers};
@@ -220,7 +233,7 @@ function conversationStart(){
  let difficult=lastDifficulty(scene.id),order=scene.turns.map((_,i)=>i);
  if(state.convoPractice==="weak"&&difficult.size)order=order.filter(i=>difficult.has(i));
  if(state.convoPractice==="weak"&&!difficult.size){toast("Sem falas difíceis registradas: iniciando conversa completa.");}
- conversation={sceneId:scene.id,order,index:0,answers:[],stage:"answer",typed:"",hint:false,translated:false,createdAt:new Date().toISOString(),level:state.convoLevel};
+ conversation={sceneId:scene.id,order,index:0,answers:[],stage:"answer",typed:"",spoke:false,gaveUp:false,hint:false,translated:false,createdAt:new Date().toISOString(),level:state.convoLevel};
  sendRender();
 }
 function conversationsHome(){
@@ -258,8 +271,8 @@ function convoStep(){
  (showHelp?'<div class="coach-dialogue-hint"><strong>Estrutura de apoio:</strong> '+esc(turn.hint||"Responda em frases curtas.")+'</div>':"")+
  '<label class="coach-reply-label" for="coachReply">Sua resposta em espanhol</label>'+
  '<textarea class="textarea" rows="4" id="coachReply" '+(conversation.stage==="compare"?"readonly":"")+' placeholder="Tente responder em voz alta, depois escreva ou use o microfone...">'+esc(conversation.typed)+'</textarea>'+
- '<div class="row wrap coach-dialogue-controls"><button class="btn secondary sm" data-act="coach-convo-mic">🎤 Falar</button>'+
- (conversation.stage==="answer"?'<button class="btn primary" data-act="coach-convo-compare">Conferir modelo</button>':
+ '<div class="row wrap coach-dialogue-controls"><button class="btn secondary sm" data-act="coach-convo-mic">🎤 Microfone</button>'+(conversation.stage==="answer"?'<button class="btn secondary sm" data-act="coach-convo-spoke">'+(conversation.spoke?"✓ Resposta oral registrada":"✓ Respondi em voz alta")+'</button>':"")+
+ (conversation.stage==="answer"?'<button class="btn primary" data-act="coach-convo-compare">Conferir modelo</button><button class="btn secondary" data-act="coach-convo-giveup">Não sei · ver exemplo</button>':
  '<div class="coach-conversation-feedback"><div class="eyebrow">RESPOSTAS POSSÍVEIS</div>'+turn.examples.map((s,i)=>'<div class="coach-conversation-example"><span>'+String(i+1)+'.</span><strong lang="es">'+esc(s)+'</strong><button class="btn secondary sm" data-act="coach-convo-example" data-index="'+i+'">🔊</button></div>').join("")+
  '<p class="muted small">Outras respostas podem estar corretas. Use sua própria avaliação; o microfone só transcreve, não avalia pronúncia.</p>'+
  '<div class="coach-grade-options"><button class="coach-grade" data-act="coach-convo-grade" data-grade="again">Precisei da resposta</button><button class="coach-grade" data-act="coach-convo-grade" data-grade="hard">Consegui com esforço</button><button class="coach-grade" data-act="coach-convo-grade" data-grade="good">Respondi sozinho</button></div></div>')+
@@ -269,9 +282,9 @@ function convoGrade(grade){
  const scene=SCENARIO_SETS.find(x=>x.id===conversation.sceneId),idx=conversation.order[conversation.index];
  const helpUsed=conversation.hint||conversation.translated||conversation.level==="guided";
  // Independent answers that relied on a visible model don't get the maximum score.
- const score=grade==="good"&&!helpUsed?1:grade==="again"?0:.5;
- conversation.answers.push({index:idx,grade,score,text:conversation.typed||"",helpUsed});
- conversation.index++;conversation.typed="";conversation.stage="answer";conversation.hint=false;conversation.translated=false;
+ const score=conversation.gaveUp||(!conversation.typed&&!conversation.spoke)?0:grade==="good"&&!helpUsed?1:grade==="again"?0:.5;
+ conversation.answers.push({index:idx,grade,score,text:conversation.typed||"",helpUsed,spoke:conversation.spoke,gaveUp:conversation.gaveUp});
+ conversation.index++;conversation.typed="";conversation.spoke=false;conversation.gaveUp=false;conversation.stage="answer";conversation.hint=false;conversation.translated=false;
  if(conversation.index>=conversation.order.length){
   let record={id:"conv-"+Date.now(),date:new Date().toISOString(),sceneId:scene.id,sceneTitle:scene.title,level:conversation.level,
     turns:conversation.answers,score:conversation.answers.reduce((n,t)=>n+t.score,0)/Math.max(1,conversation.answers.length)};
@@ -309,9 +322,10 @@ function handle(el){
  case "coach-start":chosenResult=null;startDiagnostic();return true;
  case "coach-check": if(!test)return true;
     {const input=document.getElementById("coachAnswer");if(input)test.typed=input.value;
-     if(!test.typed.trim()){toast("Tente responder primeiro ou use 'Não lembro'.");return true;}
+     if(!test.typed.trim()&&!test.spoke){toast("Tente responder ou marque que falou em voz alta. Se não souber, use 'Não lembro'.");return true;}
      test.checked=true;sendRender();return true;}
- case "coach-reveal":if(test){test.typed=document.getElementById("coachAnswer")?.value||test.typed;test.checked=true;sendRender();}return true;
+ case "coach-reveal":if(test){test.typed=document.getElementById("coachAnswer")?.value||test.typed;test.gaveUp=true;test.checked=true;sendRender();}return true;
+ case "coach-spoke":if(test){test.typed=document.getElementById("coachAnswer")?.value||test.typed;test.spoke=!test.spoke;sendRender();}return true;
  case "coach-help":if(test){test.typed=document.getElementById("coachAnswer")?.value||test.typed;test.help=!test.help;sendRender();}return true;
  case "coach-translation":if(test){test.typed=document.getElementById("coachAnswer")?.value||test.typed;test.translate=!test.translate;sendRender();}return true;
  case "coach-grade":if(test&&test.checked)collectGrade(el.dataset.grade);return true;
@@ -330,7 +344,9 @@ function handle(el){
  case "coach-convo-hear":if(conversation){const scene=SCENARIO_SETS.find(x=>x.id===conversation.sceneId);listen(scene.turns[conversation.order[conversation.index]].q);}return true;
  case "coach-convo-example":if(conversation){const scene=SCENARIO_SETS.find(x=>x.id===conversation.sceneId);const t=scene.turns[conversation.order[conversation.index]];listen(t.examples[Number(el.dataset.index)]||t.examples[0]);}return true;
  case "coach-convo-mic":if(typeof startListening==="function")startListening("coachReply");return true;
- case "coach-convo-compare":if(conversation){conversation.typed=document.getElementById("coachReply")?.value||conversation.typed;conversation.stage="compare";sendRender();}return true;
+ case "coach-convo-compare":if(conversation){conversation.typed=document.getElementById("coachReply")?.value||conversation.typed;if(!conversation.typed.trim()&&!conversation.spoke){toast("Digite sua resposta ou marque que falou em voz alta. Se não souber, revele o exemplo.");return true;}conversation.stage="compare";sendRender();}return true;
+ case "coach-convo-spoke":if(conversation){conversation.typed=document.getElementById("coachReply")?.value||conversation.typed;conversation.spoke=!conversation.spoke;sendRender();}return true;
+ case "coach-convo-giveup":if(conversation){conversation.typed=document.getElementById("coachReply")?.value||conversation.typed;conversation.gaveUp=true;conversation.stage="compare";sendRender();}return true;
  case "coach-convo-grade":if(conversation&&conversation.stage==="compare")convoGrade(el.dataset.grade);return true;
  case "coach-convo-again":chosenResult=null;state.convoPractice="all";conversationStart();return true;
  case "coach-convo-weak":chosenResult=null;state.convoPractice="weak";conversationStart();return true;
