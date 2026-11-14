@@ -258,9 +258,13 @@ async function main(args = process.argv.slice(2)) {
     'voice': {type:'string', default:DEFAULT_VOICE}, 'max-new': {type:'string'},
     'concurrency': {type:'string', default:'1'}, 'interval-ms': {type:'string', default:'3200'},
     'batch-size': {type:'string', default:'48'},
-    'activate': {type:'boolean'}, 'dry-run': {type:'boolean'}
+    'activate': {type:'boolean'}, 'dry-run': {type:'boolean'}, 'check-access': {type:'boolean'}
   }});
   const settings = profile(values.voice);
+  if (values['check-access']) {
+    await verifyVoice(configuration(), settings);
+    console.log(`Acesso ao Azure confirmado; voz disponível: ${settings.voice}. Nenhum áudio foi gerado.`); return;
+  }
   if (values.activate) {const index = activate(ROOT, settings); console.log(`Catálogo Azure ativado: ${Object.keys(index.clips).length} MP3.`); return;}
   if (values['dry-run']) {
     const texts = readSources(ROOT);

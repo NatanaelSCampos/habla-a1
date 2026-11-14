@@ -53,6 +53,15 @@ test('não aceita HTML, arquivos vazios ou falsos MP3', () => {
   assert.equal(azure.validMp3(Buffer.alloc(1000)),false);
   assert.equal(azure.validMp3(mp3()),true);
 });
+test('checagem de acesso usa apenas consulta de vozes e rejeita chave ou voz inválida', async () => {
+  let calls = 0;
+  await azure.verifyVoice(config,azure.profile(),async (url,options)=>{
+    calls++;assert.ok(url.endsWith('/voices/list'));assert.equal(options.method,undefined);return voices();
+  });
+  assert.equal(calls,1);
+  await assert.rejects(azure.verifyVoice(config,azure.profile(),async()=>new Response('',{status:401})),/HTTP 401/);
+  await assert.rejects(azure.verifyVoice(config,azure.profile(),async()=>Response.json([])),/não está disponível/);
+});
 test('lotes são separados por marcadores reais e não exigem bookmark após a última frase', () => {
   assert.deepEqual(azure.rangesFor(['Hola','Adiós'],new Map([['s0',.0125],['e0',1.565],['s1',1.565]]),86820),[{start:300,end:37560},{start:37560,end:86820}]);
   assert.throws(()=>azure.rangesFor(['Hola','Adiós'],new Map([['s0',0]]),86820),/Marcadores/);

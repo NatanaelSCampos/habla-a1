@@ -87,6 +87,8 @@ node tools/generate-azure-audio.cjs --activate
 
 O `.env` é ignorado pelo Git e nunca é carregado pelo aplicativo. `tools/generate_audio.py` permanece disponível para manutenção do gerador Kokoro anterior e validação compatível do catálogo.
 
+`node tools/generate-azure-audio.cjs --check-access` verifica a autenticação e a disponibilidade da voz por uma consulta, sem sintetizar áudio. O Actions executa essa conferência antes de uma geração manual e quando o próprio arquivo do workflow é atualizado. Atualizar o workflow não inicia geração de MP3.
+
 > Os MP3 disponíveis podem funcionar offline **depois de reproduzidos e armazenados no cache**. Não é garantido que toda a biblioteca esteja disponível sem internet.
 
 O cache dos MP3 é separado dos arquivos do aplicativo. Atualizações preservam as gravações já baixadas; o navegador ainda pode remover dados por falta de espaço. Frases sem gravação dependem de uma voz em espanhol disponível no aparelho. Bloqueios de reprodução pedem um novo toque em **Ouvir**, sem impedir a continuação do estudo.
