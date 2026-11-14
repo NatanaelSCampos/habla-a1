@@ -52,6 +52,8 @@ Ao editar conteúdo, mantenha os identificadores existentes. Os IDs das estrutur
 
 ## Contas e interface
 
+As ferramentas de desenvolvimento exigem Node 24.12+ e npm 11+, conforme os requisitos do SDK Firebase instalado. O workflow usa Node 24, a mesma linha LTS da validação local; o site publicado não depende de Node em execução.
+
 A arquitetura de contas está descrita em [ACCOUNTS-RESEARCH.md](ACCOUNTS-RESEARCH.md) e [FIREBASE-SETUP.md](FIREBASE-SETUP.md). Acrescenta perfis isolados e Firebase, preservando as chaves sem conta. A apresentação exige entrada no primeiro acesso e usa o marcador local `habla.account.welcome.v1`; não altere as chaves acadêmicas para reapresentá-la. A compilação do SDK de autenticação/banco ocorre com `npm run build:firebase`, e `npm run check:firebase` verifica o artefato incluído em `assets/vendor/`. O restante do site continua sendo publicado como arquivos estáticos.
 
 Os grupos do menu são definidos em `NAV_GROUPS`, em `assets/js/app.js`. Os grupos do desktop usam `details`/`summary` com exclusividade nativa e abrem a seção da página atual. A consulta mantém o exercício e restaura o foco ao fechar. A barra de rolagem fica oculta no menu e nos diálogos, preservando rolagem por toque, roda do mouse e teclado. As cores ficam nas variáveis de `assets/css/app.css`, incluindo os aliases usados pelos módulos antigos.

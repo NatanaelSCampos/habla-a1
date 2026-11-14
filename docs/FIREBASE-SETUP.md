@@ -64,7 +64,7 @@ Para esta integração **não é preciso criar secrets Firebase no GitHub Action
 
 ## 5. Testar antes de publicar
 
-Validação local sem chaves, usando Node 22+ e Java 21+:
+Validação local sem chaves, usando Node 24.12+ (npm 11+) e Java 21+:
 
 ```sh
 npm ci
