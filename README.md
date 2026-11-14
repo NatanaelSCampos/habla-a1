@@ -56,3 +56,19 @@ As situações são roteirizadas; não há IA em tempo real analisando o que voc
 
 ## Captura rápida de dúvidas
 O botão **Anotar dúvida** permanece disponível em todas as páginas e abre um formulário por cima da tela atual. Ao salvar, a pergunta fica **Pendente** no Caderno de Dúvidas, onde você pode registrar a explicação do professor, marcá-la como respondida e reabri-la. O formulário guarda rascunhos locais.
+
+
+## Áudio de espanhol com voz sintetizada por IA
+
+O áudio do Habla funciona em dois níveis:
+
+1. Se a frase tiver MP3 neural no catálogo `audio/index.json`, o aplicativo reproduz esse arquivo. Isso não depende de voz instalada no dispositivo.
+2. Para frases ainda não gravadas, usa como alternativa a leitura de voz do aparelho. Algumas combinações dinâmicas dependem dessa alternativa até a biblioteca ser ampliada.
+
+A geração é feita pelo workflow **Gerar áudio em espanhol**, usando Kokoro-82M com uma voz em espanhol. É um modelo aberto, sem cobrança por reprodução dos arquivos. O modelo não roda no celular e não é distribuído com o PWA.
+
+Para ampliar a biblioteca, abra [GitHub Actions → Gerar áudio em espanhol](https://github.com/NatanaelSCampos/habla-a1/actions/workflows/generate-audio.yml), selecione **Run workflow**, escolha a quantidade de novos áudios e execute. Os arquivos são adicionados automaticamente a `audio/clips/` e ao catálogo quando a execução termina com sucesso. É importante conferir a qualidade de pronúncia, especialmente em frases curtas e nomes próprios.
+
+`audio/sources.json` contém as frases previstas. `tools/generate_audio.py` permite gerar os mesmos arquivos localmente, caso se deseje usar uma máquina própria.
+
+> Os MP3 disponíveis podem funcionar offline **depois de reproduzidos e armazenados no cache**. Não é garantido que toda a biblioteca esteja disponível sem internet.
