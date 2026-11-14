@@ -62,7 +62,18 @@ jobs:
             echo "Nenhum MP3 novo para publicar."
           else
             git commit -m "audio: adicionar voz neural em espanhol"
-            git push
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                echo "Áudios publicados com sucesso."
+                exit 0
+              fi
+              echo "A branch mudou durante a publicação. Tentativa $attempt de 3."
+              sleep 3
+            done
+            echo "Não foi possível publicar os arquivos após três tentativas." >&2
+            exit 1
           fi
 
       - name: Atualizar áudio no site
