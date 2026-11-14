@@ -13,10 +13,10 @@ const SKILLS=[
  {id:"speaking",name:"Conversação",icon:"💬",description:"Responder de memória a uma pergunta em espanhol."}
 ];
 const SCENE_UNIT={
- professor:[1,5],cafe:[6],restaurant:[6],shopping:[4,6],grocery:[9,6],
- directions:[3,2],transport:[3],hotel:[3],newfriend:[1],smalltalk:[1,5],
+ professor:[1,5,10],cafe:[6],restaurant:[6,10],shopping:[4,6],grocery:[9,6],
+ directions:[3,2,10],transport:[3],hotel:[3],newfriend:[1],smalltalk:[1,5],
  workteam:[1,5],meeting:[1,7],techcall:[1,8],football:[6],hobbies:[6],
- study:[1,7],plans:[7],phone:[1],routine:[5],helpdesk:[1,8]
+ study:[1,7],plans:[7,10],phone:[1],routine:[5,10],helpdesk:[1,8]
 };
 const DEFAULT={units:[1,2,3],diagnosticLength:20,results:[],conversationHistory:[],sceneFilter:"all",sceneId:"professor",convoLevel:"guided",convoPractice:"all",showTranslations:true};
 let state;try{state={...DEFAULT,...JSON.parse(localStorage.getItem(KEY)||"{}")};}catch(e){state={...DEFAULT};}
@@ -27,7 +27,7 @@ const norm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLo
 const rand=a=>{let b=[...a];for(let i=b.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
 const format=d=>new Date(d).toLocaleDateString("pt-BR");
 const todayLocal=()=>{let d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");};
-const getUnits=()=>state.units.length?state.units:[1];
+const getUnits=()=>state.units;
 const scenes=()=>SCENARIO_SETS.map(s=>({...s,units:SCENE_UNIT[s.id]||[1]}));
 const selectedScenes=()=>scenes().filter(s=>s.units.some(u=>getUnits().includes(u)));
 const sendRender=()=>{if(typeof render==="function")render();};
@@ -158,7 +158,7 @@ function diagnosticCard(q){
  '<div class="row wrap"><button class="btn secondary sm" data-act="coach-mic">🎤 Falar no microfone</button></div></div>')+
  '<div class="coach-question-help"><button class="btn secondary sm" data-act="coach-help">'+(test.help?"Ocultar dica":"Ver dica")+'</button>'+
  (isListening?'': '<button class="btn secondary sm" data-act="coach-translation">'+(test.translate?"Ocultar apoio":"Ver tradução/apoio")+'</button>')+'</div>'+
- (test.help?'<div class="coach-hint">'+esc(q.hint||q.lemma?"Verbo: "+q.lemma:q.origin)+'</div>':"")+
+ (test.help?'<div class="coach-hint">'+esc(q.hint||(q.lemma?"Verbo: "+q.lemma:q.origin))+'</div>':"")+
  (test.translate?'<div class="coach-hint">'+esc(q.pt||"Frase baseada no conteúdo desta unidade.")+'</div>':"")+
  (!test.checked?'<div class="row wrap coach-question-footer"><button class="btn primary" data-act="coach-check">Conferir</button><button class="btn secondary" data-act="coach-reveal">Não lembro · revelar</button></div>':
  '<div class="coach-feedback"><div class="eyebrow">'+(!open?(matched?"RESPOSTA CORRESPONDENTE":"COMPARE SUA RESPOSTA"):"RESPOSTA-MODELO")+'</div><div class="coach-model" lang="es">'+esc(q.answer)+'</div>'+
@@ -213,7 +213,7 @@ function convoHistoryFor(id){return state.conversationHistory.filter(h=>h.sceneI
 function lastDifficulty(id){return new Set(state.conversationHistory.filter(h=>h.sceneId===id).slice(-3).flatMap(h=>(h.turns||[]).filter(t=>t.grade!=="good").map(t=>t.index)));}
 function conversationStart(){
  let scene=SCENARIO_SETS.find(s=>s.id===state.sceneId)||selectedScenes()[0];
- if(!scene||!scene.units&&(!SCENE_UNIT[scene.id]||!SCENE_UNIT[scene.id].some(u=>getUnits().includes(u)))){
+ if(!scene||!SCENE_UNIT[scene.id]?.some(u=>getUnits().includes(u))){
  scene=selectedScenes()[0];
  }
  if(!scene){toast("Não há diálogo nas unidades selecionadas.");return;}
