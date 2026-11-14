@@ -72,3 +72,24 @@ Para ampliar a biblioteca, abra [GitHub Actions → Gerar áudio em espanhol](ht
 `audio/sources.json` contém as frases previstas. `tools/generate_audio.py` permite gerar os mesmos arquivos localmente, caso se deseje usar uma máquina própria.
 
 > Os MP3 disponíveis podem funcionar offline **depois de reproduzidos e armazenados no cache**. Não é garantido que toda a biblioteca esteja disponível sem internet.
+
+O cache dos MP3 é separado dos arquivos do aplicativo. Atualizações preservam as gravações já baixadas; o navegador ainda pode remover dados por falta de espaço. Frases sem gravação dependem de uma voz em espanhol disponível no aparelho. Bloqueios de reprodução pedem um novo toque em **Ouvir**, sem impedir a continuação do estudo.
+
+## Verificação técnica
+
+O [relatório de auditoria do áudio](docs/AUDIO-AUDIT.md) registra a arquitetura, os problemas encontrados, a cobertura das gravações e os limites da validação.
+
+Os testes não alteram o site publicado nem os dados dos estudantes:
+
+```sh
+npm ci
+npm test
+python tests/test_generate_audio.py -v
+python tools/generate_audio.py --validate-only
+npx playwright install chromium webkit
+npm run test:browser
+```
+
+O Playwright serve o aplicativo em `/habla-a1/`, usa perfis isolados e grava os resultados em `test-results/`. A configuração inclui Edge (`msedge`), que precisa estar instalado; `BROWSERS` permite selecionar os casos `chromium-desktop`, `chromium-mobile`, `webkit-mobile` e `edge-desktop`. A emulação móvel não substitui testes em celulares reais. Limitações nativas do WebKit para Windows são identificadas separadamente nos resultados.
+
+O gerador aceita `--max-new 0` para reconciliar o catálogo sem baixar o modelo. Arquivos ausentes ou incompletos deixam de contar como gravações disponíveis. A geração usa arquivos temporários e salva o catálogo após cada sucesso; qualquer falha de síntese encerra o comando com erro. O workflow guarda um artefato por sete dias para recuperar MP3 em caso de interrupção ou conflito na publicação. O limite padrão de 450 permite concluir a seleção inicial de 448 frases em uma execução, gerando apenas as pendentes.
