@@ -26,7 +26,7 @@ No Chrome/Edge ou Safari, abra o site HTTPS e escolha *Instalar aplicativo* ou *
 A seção **Revisão Inteligente** permite ativar notificações locais e escolher os horários (por padrão, 05:00, 13:00 e 20:00). Elas exigem permissão e só podem ser verificadas quando o PWA está ativo, ou quando você volta a usá-lo próximo do horário. **Não há push automático em segundo plano quando o PWA está fechado**. Para entrega recorrente com o aplicativo fechado, é necessário um serviço de Web Push com infraestrutura externa, assinaturas individuais e agendamento do lado do servidor.
 
 ## Progresso e privacidade
-- Progresso individual salvo no navegador de cada aparelho, sem conta ou sincronização
+- No primeiro acesso após a atualização, a apresentação explica como continuar entre celular e computador e exige entrar com Google ou e-mail. A sessão fica salva para os próximos acessos, inclusive offline. O histórico anterior é preservado.
 - Faça backup na seção **Meu progresso**; o backup também inclui o histórico do Laboratório
 - Publicação via GitHub Pages: o site é acessível por qualquer pessoa que tenha ou descubra o endereço; não é uma área restrita a amigos
 - O caderno existente tem **236 atividades adaptadas** e não representa a reprodução integral literal das atividades e dos áudios dos livros originais
@@ -48,7 +48,7 @@ A seção **Revisão Inteligente** permite ativar notificações locais e escolh
 
 ## Evolução futura
 - Complementar e revisar exercício por exercício do livro impresso com base nas fontes
-- Sincronização entre dispositivos e alunos (se houver necessidade)
+- Homologar e ativar as contas e a sincronização implementadas localmente
 - Backend de Web Push para avisos confiáveis com o app fechado
 
 As atualizações do GitHub Pages podem demorar um pouco para chegar a todos os dispositivos devido à publicação e ao cache do PWA.
@@ -115,3 +115,15 @@ npm run test:browser
 O Playwright serve o aplicativo em `/habla-a1/`, usa perfis isolados e grava os resultados em `test-results/`. A configuração inclui Edge (`msedge`), que precisa estar instalado; `BROWSERS` permite selecionar os casos `chromium-desktop`, `chromium-mobile`, `webkit-mobile` e `edge-desktop`. A emulação móvel não substitui testes em celulares reais. Limitações nativas do WebKit para Windows são identificadas separadamente nos resultados.
 
 O gerador Azure aceita `--dry-run` para estimar a seleção sem chamar o serviço e `--max-new` para limitar uma execução. Ele reutiliza os arquivos concluídos e gera lotes de até 48 frases por pedido, separadas pelos marcadores reais do Speech SDK. MP3 e catálogo são escritos de forma atômica. O catálogo ativo só muda após a validação de todas as frases. Voz, formato e perfil participam dos nomes dos arquivos, evitando que um cache antigo sirva a voz anterior. O workflow guarda um artefato por sete dias para recuperação após interrupção ou conflito na publicação.
+
+## Contas e sincronização
+
+A aplicação usa Firebase Authentication + Firestore e separa o histórico de cada aluno. A primeira entrada após a atualização apresenta a sincronização e exige uma conta; depois a sessão permanece salva. Inclui importação inicial opcional, fila offline, retomada de atividade e backup JSON. O responsável confirmou o login Google no projeto configurado. A sincronização foi testada com emuladores; a homologação em dois aparelhos físicos e do provedor E-mail/senha permanece pendente.
+
+O menu organiza os recursos em **Estudar**, **Conversar** e **Apoio à aula**, com grupos recolhíveis no computador. **Consultar espanhol**, em Apoio à aula, abre WordReference, YouGlish, Tatoeba e Forvo sem interromper a atividade. A conta também tem entrada no menu e o botão **Começar a estudar**. Os temas claro e escuro usam preto, branco e vermelho, com a fonte Inter incluída no cache offline.
+
+- [Comparação dos provedores e integrações](docs/ACCOUNTS-RESEARCH.md)
+- [Configurações que faltam e roteiro de ativação](docs/FIREBASE-SETUP.md)
+- [Resultados e limites da validação local](docs/ACCOUNTS-VALIDATION.md)
+- Testes locais de segurança e sincronização: `npm run test:sync` (Java 21+, sem conta Firebase real).
+- Configuração pública: `npm run configure:firebase`, após preencher os campos `FIREBASE_*` do `.env.example`. Chaves Azure e credenciais Admin nunca entram no site.

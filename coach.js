@@ -19,9 +19,9 @@ const SCENE_UNIT={
  study:[1,7],plans:[7,10],phone:[1],routine:[5,10],helpdesk:[1,8]
 };
 const DEFAULT={units:[1,2,3],diagnosticLength:20,results:[],conversationHistory:[],sceneFilter:"all",sceneId:"professor",convoLevel:"guided",convoPractice:"all",showTranslations:true};
-let state;try{state={...DEFAULT,...JSON.parse(localStorage.getItem(KEY)||"{}")};}catch(e){state={...DEFAULT};}
+let state;try{state={...DEFAULT,...JSON.parse(window.HablaStore.getItem(KEY)||"{}")};}catch(e){state={...DEFAULT};}
 let test=null,conversation=null,chosenResult=null;
-const saveState=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){toast("Armazenamento indisponível. Exporte seu backup.");}};
+const saveState=()=>{try{window.HablaStore.setItem(KEY,JSON.stringify(state));}catch(e){toast("Armazenamento indisponível. Exporte seu backup.");}};
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[¿?¡!.,;:]/g,"").replace(/\s+/g," ").trim();
 const rand=a=>{let b=[...a];for(let i=b.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
@@ -374,7 +374,8 @@ document.addEventListener("input",event=>{
 window.HablaCoach={
  diagnostic:diagnosticPage,dialogues:conversationsPage,handleAction:handle,
  getState:()=>state,
- reload:()=>{try{state={...DEFAULT,...JSON.parse(localStorage.getItem(KEY)||"{}")};}catch(e){state={...DEFAULT};}test=null;conversation=null;chosenResult=null;},
+ checkpoint:()=>({test,conversation,chosenResult}),restore:value=>{test=value?.test||null;conversation=value?.conversation||null;chosenResult=value?.chosenResult||null;},
+ reload:preserveSession=>{try{state={...DEFAULT,...JSON.parse(window.HablaStore.getItem(KEY)||"{}")};}catch(e){state={...DEFAULT};}if(!preserveSession){test=null;conversation=null;chosenResult=null;}},
  report:()=>({diagnostics:state.results.length,conversations:state.conversationHistory.length})
 };
 if(typeof GUIDE_PAGES!=="undefined"){

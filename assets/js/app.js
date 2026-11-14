@@ -374,7 +374,7 @@ const WB_BASE = () => ({ answers: {}, results: {}, review: {}, notes: {}, last: 
 let wb = loadWB();
 function loadWB() {
   try {
-    const v = JSON.parse(localStorage.getItem(VERB_BOOK_KEY));
+    const v = JSON.parse(window.HablaStore.getItem(VERB_BOOK_KEY));
     return v && typeof v === 'object'
       ? Object.assign(WB_BASE(), v, {
           answers: v.answers || {},
@@ -389,7 +389,7 @@ function loadWB() {
 }
 function wbSave() {
   try {
-    localStorage.setItem(VERB_BOOK_KEY, JSON.stringify(wb));
+    window.HablaStore.setItem(VERB_BOOK_KEY, JSON.stringify(wb));
   } catch (e) {
     toast('Não foi possível salvar o caderno; exporte um backup.');
   }
@@ -635,6 +635,23 @@ const NAV = [
   { key: 'workbook', label: 'Caderno A1 · 10 unidades', icon: 'book' },
   { key: 'progress', label: 'Meu progresso', icon: 'chart' },
 ];
+const NAV_GROUPS = [
+  {
+    key: 'study',
+    label: 'Estudar',
+    icon: 'book',
+    pages: ['lab', 'library', 'verbs', 'workbook', 'practice', 'reviews'],
+  },
+  {
+    key: 'conversation',
+    label: 'Conversar',
+    icon: 'users',
+    pages: ['diagnostic', 'dialogues', 'scenarios'],
+  },
+  { key: 'class', label: 'Apoio à aula', icon: 'message', pages: ['board', 'doubts'] },
+];
+// Estado visual do menu, independente do histórico acadêmico.
+let navExpanded = null;
 const PATHS = {
   home: '<path d="m3 10 9-7 9 7"/><path d="M5 9v12h14V9"/><path d="M9 21v-7h6v7"/>',
   book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
@@ -685,7 +702,7 @@ function escapeHTML(s) {
 }
 function loadStore() {
   try {
-    const v = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const v = JSON.parse(window.HablaStore.getItem(STORAGE_KEY));
     return v && typeof v === 'object' ? v : {};
   } catch (e) {
     return {};
@@ -712,7 +729,7 @@ let data = Object.assign(
 );
 function save() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    window.HablaStore.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
     toast('Não foi possível salvar. Confira o armazenamento do navegador.');
   }
@@ -868,15 +885,21 @@ function navBtn(it) {
   return `<button class="nav-link ${ui.page === it.key ? 'active' : ''}" data-act="nav" data-page="${it.key}">${ico(it.icon, 19)} <span>${escapeHTML(it.label)}</span>${it.key === 'reviews' && dueCards().length ? `<span class="count">${dueCards().length}</span>` : it.key === 'doubts' && (data.doubts || []).some((x) => x.status === 'pending') ? `<span class="count">${data.doubts.filter((x) => x.status === 'pending').length}</span>` : ''}</button>`;
 }
 function renderChrome() {
+  navExpanded = document.querySelector('#sidebarNav details[open]')?.dataset.navGroup || null;
+  const currentGroup = NAV_GROUPS.find(
+    (group) => group.pages.includes(ui.page) || (ui.page === 'study' && group.key === 'study')
+  );
   document.getElementById('sidebarNav').innerHTML =
-    '<div class="nav-label">Estudo e conversação</div>' +
-    NAV.filter((x) => !['progress'].includes(x.key))
-      .map(navBtn)
-      .join('') +
-    '<div class="nav-label" style="margin-top:16px">Meu histórico</div>' +
-    NAV.filter((x) => x.key === 'progress')
-      .map(navBtn)
-      .join('');
+    navBtn(NAV[0]) +
+    NAV_GROUPS.map((group) => {
+      const current =
+        group.pages.includes(ui.page) || (ui.page === 'study' && group.key === 'study');
+      const expanded = currentGroup ? current : navExpanded === group.key;
+      return `<details class="nav-group" name="study-navigation" data-nav-group="${group.key}" ${expanded ? 'open' : ''}><summary>${ico(group.icon)}<span>${group.label}</span>${ico('next', 15)}</summary><div class="nav-group-links">${group.pages.map((key) => navBtn(NAV.find((item) => item.key === key))).join('')}${group.key === 'class' ? `<button class="nav-link nav-resource" data-resources-open>${ico('search')}<span>Consultar espanhol</span></button>` : ''}</div></details>`;
+    }).join('') +
+    '<div class="nav-personal">' +
+    navBtn(NAV.find((item) => item.key === 'progress')) +
+    `<button class="nav-link" data-account="open">${ico('users')}<span>Conta e sincronização</span></button></div>`;
   const dc = document.getElementById('doubtFabCount');
   if (dc) {
     const n = (data.doubts || []).filter((x) => x.status === 'pending').length;
@@ -903,8 +926,10 @@ function closeMore() {
   document.getElementById('moreRoot').innerHTML = '';
 }
 function openMore() {
+  const mobileItem = (it) =>
+    `<button data-act="more-nav" data-page="${it.key}" class="${ui.page === it.key ? 'active' : ''}">${ico(it.icon, 19)}<span>${escapeHTML(it.label)}</span></button>`;
   document.getElementById('moreRoot').innerHTML =
-    `<div class="more-overlay" data-act="more-close"><section class="more-sheet" role="dialog" aria-modal="true" aria-label="Todos os recursos"><div class="sheet-grip"></div><div class="row between"><h2>Todos os recursos</h2><button class="icon-btn" data-act="more-close" aria-label="Fechar menu">×</button></div><div class="more-grid">${NAV.map((it) => `<button data-act="more-nav" data-page="${it.key}" class="${ui.page === it.key ? 'active' : ''}">${ico(it.icon, 19)}<span>${escapeHTML(it.label)}</span></button>`).join('')}</div><div class="row wrap"><button class="btn secondary sm" data-act="guide-replay">▶ Ver tutorial inicial</button><button class="btn secondary sm" data-act="guide-screen-replay">? Como usar esta tela</button><button class="btn secondary sm" data-act="install-help">⊕ Adicionar à tela inicial</button></div></section></div>`;
+    `<div class="more-overlay" data-act="more-close"><section class="more-sheet" role="dialog" aria-modal="true" aria-label="Todos os recursos"><div class="sheet-grip"></div><div class="row between"><h2>Seu espaço de estudo</h2><button class="icon-btn" data-act="more-close" aria-label="Fechar menu">×</button></div>${NAV_GROUPS.map((group) => `<section class="more-group"><h3>${group.label}</h3><div class="more-grid">${group.pages.map((key) => mobileItem(NAV.find((item) => item.key === key))).join('')}${group.key === 'class' ? `<button class="nav-resource" data-resources-open>${ico('search')}<span>Consultar espanhol</span></button>` : ''}</div></section>`).join('')}<section class="more-group"><h3>Minha conta</h3><div class="more-grid">${mobileItem(NAV[0])}${mobileItem(NAV.find((item) => item.key === 'progress'))}<button data-account="open">${ico('users')}<span>Conta e sincronização</span></button></div></section><div class="row wrap"><button class="btn secondary sm" data-act="guide-replay">▶ Ver tutorial inicial</button><button class="btn secondary sm" data-act="guide-screen-replay">? Como usar esta tela</button><button class="btn secondary sm" data-act="install-help">⊕ Adicionar à tela inicial</button></div></section></div>`;
 }
 function installHelp() {
   closeMore();
@@ -942,6 +967,8 @@ function go(page) {
 function render() {
   window.HablaAudio?.stop();
   document.documentElement.dataset.theme = data.theme === 'dark' ? 'dark' : 'light';
+  document.querySelector('meta[name="theme-color"]').content =
+    data.theme === 'dark' ? '#111111' : '#fafafa';
   renderChrome();
   const views = {
     diagnostic: () =>
@@ -972,6 +999,8 @@ function render() {
     progress: renderProgress,
   };
   document.getElementById('app').innerHTML = (views[ui.page] || renderHome)();
+  window.HablaAccounts?.refresh();
+  window.dispatchEvent(new Event('habla:render'));
 }
 function heading(kicker, title, subtitle, extra = '') {
   return `<div class="page-head"><div><div class="eyebrow">${escapeHTML(kicker)}</div><h1>${escapeHTML(title)}</h1><p>${escapeHTML(subtitle)}</p></div>${extra}</div>`;
@@ -1415,7 +1444,7 @@ function renderProgress() {
     .sort((a, b) => b.bad - a.bad || a.count - b.count)
     .slice(0, 6);
   return `${heading('Retenção e consistência', 'Meu progresso', 'Acompanhe seu hábito, registre frases que faltaram durante a aula e faça backup do que já estudou.')}
-${renderCalendar()}<div class="grid four" style="margin:18px 0 20px"><div class="card stat"><div class="stat-label">Tentativas totais</div><div class="value">${lifetimeAttempts()}</div><div class="detail">Em todos os treinos</div></div><div class="card stat"><div class="stat-label">Frases praticadas</div><div class="value">${progressCount()}</div><div class="detail">De ${allCards().length} disponíveis</div></div><div class="card stat"><div class="stat-label">Em consolidação</div><div class="value">${masteredCount()}</div><div class="detail">Lembradas em mais de um ciclo</div></div><div class="card stat"><div class="stat-label">Dias seguidos</div><div class="value">${streak()}</div><div class="detail">Com pelo menos um treino</div></div></div>
+${window.HablaAccounts?.card() || ''}${renderCalendar()}<div class="grid four" style="margin:18px 0 20px"><div class="card stat"><div class="stat-label">Tentativas totais</div><div class="value">${lifetimeAttempts()}</div><div class="detail">Em todos os treinos</div></div><div class="card stat"><div class="stat-label">Frases praticadas</div><div class="value">${progressCount()}</div><div class="detail">De ${allCards().length} disponíveis</div></div><div class="card stat"><div class="stat-label">Em consolidação</div><div class="value">${masteredCount()}</div><div class="detail">Lembradas em mais de um ciclo</div></div><div class="card stat"><div class="stat-label">Dias seguidos</div><div class="value">${streak()}</div><div class="detail">Com pelo menos um treino</div></div></div>
 <div class="grid two" style="align-items:start"><div class="card"><h2>Seus últimos 14 dias</h2><p class="muted small" style="margin-top:7px">Quantidade de tentativas por dia, sem exigir uma sequência perfeita.</p><div class="mini-bars" style="height:153px;margin-top:14px">${days.map((d) => `<div class="mini-bar-col" title="${d.date}: ${d.attempts} tentativas"><div class="mini-bar ${d.attempts ? 'has' : ''}" style="height:${Math.max(4, (95 * d.attempts) / max)}px"></div><span>${d.date.slice(-2)}</span></div>`).join('')}</div><p class="muted tiny" style="margin-top:8px">A altura mostra o volume; não mede sua fluência.</p></div><div class="card"><h2>Estruturas para reforçar</h2><p class="muted small" style="margin:7px 0 12px">Prioridade para estruturas em que você marcou “Esqueci”.</p>${weak.length ? weak.map((x) => `<div class="metric-line"><div><strong>${escapeHTML(x.title)}</strong><div class="muted tiny">${x.count} frases praticadas</div></div><button class="btn ghost sm" data-act="study" data-id="${escapeHTML(x.id)}">Estudar</button></div>`).join('') : `<div class="empty"><h3>Sem histórico ainda</h3><p>Treine algumas frases e esta seção passa a mostrar suas dificuldades.</p></div>`}</div></div>
 <div style="height:22px"></div><div class="grid two" style="align-items:start"><div class="card"><h2>Frases que eu quis dizer</h2><p class="small muted" style="margin:7px 0 20px">Depois de cada aula, registre 1 a 3 ideias em que você travou. Elas entram na biblioteca e nos exercícios.</p><form id="personalForm" class="stack" style="gap:10px"><label class="small"><strong>O que eu quis dizer em português</strong><input name="pt" class="field" style="width:100%;margin-top:6px" maxlength="180" required placeholder="Preciso revisar o verbo..." /></label><label class="small"><strong>Como digo em espanhol</strong><input name="es" class="field" style="width:100%;margin-top:6px" maxlength="180" required placeholder="Necesito repasar el verbo..." /></label><button type="submit" class="btn">${ico('check', 16)} Adicionar aos meus treinos</button></form>
 <div style="margin-top:17px">${
@@ -1441,7 +1470,7 @@ ${renderCalendar()}<div class="grid four" style="margin:18px 0 20px"><div class=
     )
     .join(
       ''
-    )}</select></div><div class="setting-row"><div><strong>Adicionar à tela inicial</strong><p>Adicione o Habla à tela inicial e acesse seus estudos com um toque.</p></div><button class="btn secondary sm" data-act="install-help">Como instalar</button></div><div class="setting-row"><div><strong>Exportar progresso</strong><p>Salve um backup para mudar de navegador ou computador.</p></div><button class="btn secondary sm" data-act="export">${ico('download', 15)} Exportar</button></div><div class="setting-row"><div><strong>Importar backup</strong><p>Substitui o progresso local por um arquivo salvo.</p></div><button class="btn secondary sm" data-act="import">${ico('upload', 15)} Importar</button></div><div class="setting-row"><div><strong>Limpar meus dados</strong><p>Apaga o progresso e suas frases pessoais deste navegador.</p></div><button class="btn secondary sm" data-act="reset">${ico('trash', 15)} Limpar</button></div></div><div class="method" style="margin-top:12px"><strong>Seus estudos:</strong> respostas, dúvidas e anotações ficam salvas neste aparelho. Faça um backup para guardar seus dados ou continuar em outro dispositivo.</div></div></div>`;
+    )}</select></div><div class="setting-row"><div><strong>Adicionar à tela inicial</strong><p>Adicione o Habla à tela inicial e acesse seus estudos com um toque.</p></div><button class="btn secondary sm" data-act="install-help">Como instalar</button></div><div class="setting-row"><div><strong>Exportar progresso</strong><p>Salve um backup para mudar de navegador ou computador.</p></div><button class="btn secondary sm" data-act="export">${ico('download', 15)} Exportar</button></div><div class="setting-row"><div><strong>Importar backup</strong><p>Substitui o histórico atual por um arquivo salvo. Se estiver com conta, sincroniza a alteração.</p></div><button class="btn secondary sm" data-act="import">${ico('upload', 15)} Importar</button></div><div class="setting-row"><div><strong>Limpar meus dados</strong><p>Apaga o histórico atual. Se estiver com conta, sincroniza a exclusão com seus aparelhos.</p></div><button class="btn secondary sm" data-act="reset">${ico('trash', 15)} Limpar</button></div></div><div class="method" style="margin-top:12px"><strong>Seus estudos:</strong> respostas, dúvidas e anotações ficam salvas neste aparelho. Entre para sincronizar entre aparelhos e mantenha seus backups.</div></div></div>`;
 }
 let toastTimer = null;
 function toast(msg) {
@@ -1533,7 +1562,7 @@ function startListening(target) {
     toast('Não foi possível ativar o microfone neste navegador.');
   }
 }
-function downloadBackup() {
+function downloadBackup(snapshot = window.HablaStore.snapshot()) {
   const blob = new Blob(
     [
       JSON.stringify(
@@ -1541,11 +1570,12 @@ function downloadBackup() {
           app: 'Habla',
           version: 2,
           createdAt: new Date().toISOString(),
-          data,
-          workbookState: wb,
+          data: snapshot[STORAGE_KEY] || { progress: {} },
+          workbookState: snapshot[VERB_BOOK_KEY],
           guideState: guidePrefs,
-          labState: JSON.parse(localStorage.getItem('habla.lab.v1') || 'null'),
-          coachState: JSON.parse(localStorage.getItem('habla.coach.v1') || 'null'),
+          labState: snapshot['habla.lab.v1'],
+          coachState: snapshot['habla.coach.v1'],
+          resumeState: snapshot['habla.resume.v1'],
         },
         null,
         2
@@ -2059,9 +2089,15 @@ function onAction(el) {
     case 'reset':
       if (
         confirm(
-          'Apagar TODO o progresso, inclusive conjugação, caderno e frases pessoais? Faça um backup antes.'
+          'Apagar TODO o histórico atual, inclusive conjugação, caderno e frases pessoais? Se estiver com conta, a exclusão será sincronizada com seus aparelhos. Faça um backup antes.'
         )
       ) {
+        try {
+          window.HablaStore.archive('antes-de-limpar');
+        } catch (_) {
+          toast('Faça um backup antes de limpar: não há espaço para guardar uma cópia.');
+          return;
+        }
         const theme = data.theme;
         data = {
           progress: {},
@@ -2070,30 +2106,30 @@ function onAction(el) {
           scenarioActivity: {},
           custom: [],
           doubts: [],
+          verbProgress: {},
+          verbActivity: {},
+          workbookActivity: {},
           doubtDraft: null,
           doubtQuickDraft: null,
           theme,
           dailyGoal: 8,
           voiceSpeed: 0.88,
         };
-        wb = WB_BASE();
-        wbSave();
-        save();
-        ui.session = null;
         try {
-          localStorage.removeItem('habla.lab.v1');
-          window.HablaLab?.reload();
-          localStorage.removeItem('habla.coach.v1');
-          window.HablaCoach?.reload();
-        } catch (e) {}
-        render();
-        toast('Dados locais reiniciados.');
+          window.HablaStore.replace({ [STORAGE_KEY]: data, [VERB_BOOK_KEY]: WB_BASE() });
+          window.HablaApp.reload(true);
+          toast('Histórico reiniciado.');
+        } catch (_) {
+          window.HablaApp.reload(true);
+          toast('Não foi possível limpar. Seu histórico foi preservado.');
+        }
       }
       return;
   }
 }
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
+  if (el?.classList.contains('more-overlay') && e.target !== el) return;
   if (el && !el.disabled) {
     e.preventDefault();
     onAction(el);
@@ -2284,37 +2320,31 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
   try {
     const parsed = JSON.parse(await file.text());
     const imported = sanitizeImport(parsed);
-    if (confirm('Importar este arquivo? O progresso atual será substituído pelo backup.')) {
-      data = imported;
-      save();
+    if (
+      confirm(
+        'Importar este arquivo? O histórico atual será substituído pelo backup' +
+          (window.HablaStore.active() ? ' e a alteração será sincronizada com sua conta.' : '.')
+      )
+    ) {
+      window.HablaStore.archive('antes-de-importar-backup');
+      const snapshot = window.HablaStore.snapshot();
+      snapshot[STORAGE_KEY] = imported;
+      for (const [field, key] of [
+        ['workbookState', VERB_BOOK_KEY],
+        ['coachState', 'habla.coach.v1'],
+        ['labState', 'habla.lab.v1'],
+        ['resumeState', 'habla.resume.v1'],
+      ]) {
+        if (parsed[field] && typeof parsed[field] === 'object') snapshot[key] = parsed[field];
+      }
+      // Valida todos os blocos antes de substituir o histórico.
+      window.HablaSyncData.seed('validation', snapshot, window.HablaStore.device());
+      window.HablaStore.replace(snapshot);
       if (parsed.guideState) {
         guidePrefs = parsed.guideState;
         guideSave();
       }
-      if (parsed.workbookState && typeof parsed.workbookState === 'object') {
-        try {
-          localStorage.setItem(VERB_BOOK_KEY, JSON.stringify(parsed.workbookState));
-          wb = loadWB();
-        } catch (e) {
-          toast('Caderno não pôde ser restaurado neste navegador.');
-        }
-      }
-      if (parsed.coachState && typeof parsed.coachState === 'object') {
-        try {
-          localStorage.setItem('habla.coach.v1', JSON.stringify(parsed.coachState));
-          window.HablaCoach?.reload();
-        } catch (e) {
-          toast('Não foi possível restaurar o diagnóstico e a conversação.');
-        }
-      }
-      if (parsed.labState && typeof parsed.labState === 'object') {
-        try {
-          localStorage.setItem('habla.lab.v1', JSON.stringify(parsed.labState));
-          if (window.HablaLab) window.HablaLab.reload();
-        } catch (e) {
-          toast('Não foi possível restaurar a revisão inteligente.');
-        }
-      }
+      window.HablaApp.reload(true);
       ui.session = null;
       ui.libraryCategory = 'Todas';
       ui.libraryLevel = 'Todos';
@@ -2323,27 +2353,6 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
     }
   } catch (err) {
     toast('Não foi possível importar: arquivo inválido.');
-  }
-});
-window.addEventListener('storage', (e) => {
-  if (e.key === STORAGE_KEY) {
-    data = Object.assign(
-      {
-        progress: {},
-        favorites: {},
-        activity: {},
-        scenarioActivity: {},
-        custom: [],
-        verbProgress: {},
-        verbActivity: {},
-        workbookActivity: {},
-        theme: 'light',
-        dailyGoal: 8,
-        voiceSpeed: 0.88,
-      },
-      loadStore()
-    );
-    if (!ui.session) render();
   }
 });
 // Recurso pedagógico: hábitos de estudo baseados em sessões efetivamente concluídas.

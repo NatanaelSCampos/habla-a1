@@ -1,0 +1,3 @@
+# O SDK gerado inclui espaços literais em mensagens do fornecedor.
+# Preserve o artefato original e a reprodução exata da compilação.
+assets/vendor/firebase-sdk.js -whitespace

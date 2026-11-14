@@ -7,14 +7,15 @@ const pw=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const root=path.resolve(__dirname,'..');
 const results=path.join(root,'test-results');fs.mkdirSync(results,{recursive:true});
 const catalog=JSON.parse(fs.readFileSync(path.join(root,'audio/index.json'),'utf8'));
-const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png','.mp3':'audio/mpeg'};
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.woff2':'font/woff2','.png':'image/png','.mp3':'audio/mpeg'};
 const server=http.createServer((req,res)=>{
  const url=new URL(req.url,'http://localhost');
  if(!url.pathname.startsWith('/habla-a1/')){res.writeHead(404).end();return;}
  const relative=decodeURIComponent(url.pathname.slice('/habla-a1/'.length))||'index.html';
  const file=path.resolve(root,relative);
  if(!file.startsWith(root+path.sep)||!types[path.extname(file)]||!fs.existsSync(file)){res.writeHead(404).end();return;}
- const body=fs.readFileSync(file),headers={'Content-Type':types[path.extname(file)],'Cache-Control':'no-cache','Accept-Ranges':'bytes'};
+ // Regressão local sem autenticação real, mesmo depois de configurar o projeto.
+ const body=relative==='firebase-config.js'?Buffer.from('window.HABLA_FIREBASE_CONFIG = null;'):fs.readFileSync(file),headers={'Content-Type':types[path.extname(file)],'Cache-Control':'no-cache','Accept-Ranges':'bytes'};
  const range=/^bytes=(\d+)-(\d*)$/.exec(req.headers.range||'');
  if(range){const start=Number(range[1]),end=Math.min(range[2]?Number(range[2]):body.length-1,body.length-1);res.writeHead(206,{...headers,'Content-Range':`bytes ${start}-${end}/${body.length}`,'Content-Length':end-start+1}).end(body.subarray(start,end+1));}
  else res.writeHead(200,{...headers,'Content-Length':body.length}).end(body);
@@ -27,6 +28,13 @@ const seed=()=>{
  localStorage.setItem('frecuencias.a1.caderno.v2',JSON.stringify({answers:{'u1-1':['respuesta anterior']},results:{'u1-1':{score:1,total:1}},notes:{'u1-1':'Anotação anterior'},review:{'u1-1':true},last:'u1-1'}));
 };
 async function nav(page,name){
+ const sidebar=page.locator('#sidebarNav');
+ if(await sidebar.isVisible()){
+  const group=sidebar.locator(`details:has([data-page="${name}"])`);
+  if(await group.count()&&!await group.getAttribute('open')){
+   if(!await group.evaluate(node=>node.open))await group.locator('summary').click();
+  }
+ }
  const direct=page.locator(`[data-act="nav"][data-page="${name}"]:visible`).first();
  if(await direct.count())await direct.click();
  else{await page.locator('[data-act="more-open"]').click();await page.locator(`[data-act="more-nav"][data-page="${name}"]`).click();}
@@ -34,7 +42,7 @@ async function nav(page,name){
 }
 async function waitForAudio(page,unsupported){
  if(unsupported)await page.waitForFunction(()=>document.getElementById('audioStatus').hidden&&/Não foi possível ouvir esta frase neste aparelho/.test(document.getElementById('toast').textContent));
- else await page.waitForFunction(()=>document.getElementById('audioStatus').textContent==='Reproduzindo espanhol…');
+ else await page.waitForFunction(()=>window.__playedAudio||document.getElementById('audioStatus').textContent==='Reproduzindo espanhol…');
 }
 async function testCase(base,config){
  const browser=await pw[config.engine].launch(config.channel?{channel:config.channel}:{});
@@ -47,16 +55,17 @@ async function testCase(base,config){
   await page.goto(base);await page.waitForFunction(()=>window.HablaAudio?.stats().ready&&window.HablaCoach&&window.HablaLab);
   await page.evaluate(()=>navigator.serviceWorker.ready);
   await page.waitForFunction(()=>navigator.serviceWorker.controller);
-  // Blob direto testa a capacidade nativa sem depender do player ou de Range.
+  // Testa a mesma origem de mídia usada pelo player. WebKit Windows pode
+  // rejeitar um Blob e ainda aceitar a URL do mesmo MP3.
   const mediaCapability=await page.evaluate(async path=>{
-   const response=await fetch('./audio/'+path),url=URL.createObjectURL(await response.blob()),a=document.createElement('audio');
-   try{a.src=url;await a.play();a.pause();return {supported:true};}
+   const a=document.createElement('audio');
+   try{a.src='./audio/'+path;await a.play();a.pause();return {supported:true};}
    catch(e){return {supported:e.name!=='NotSupportedError',error:e.name,message:e.message};}
-   finally{URL.revokeObjectURL(url);}
+   finally{a.pause();a.removeAttribute('src');a.load();}
   },Object.values(catalog.clips)[0]);
   const unsupported=!mediaCapability.supported;
   if(config.engine!=='webkit')assert.equal(unsupported,false,'Este navegador precisa reproduzir MP3 nativamente para validar o áudio');
-  await page.evaluate(()=>{const NativeAudio=window.Audio;window.__mediaErrors=[];window.Audio=function(...args){const audio=new NativeAudio(...args);audio.addEventListener('error',()=>__mediaErrors.push({code:audio.error?.code,message:audio.error?.message}));window.__lastAudio=audio;return audio;};});
+  await page.evaluate(()=>{const NativeAudio=window.Audio;window.__mediaErrors=[];window.__audioTrace=[];for(const method of ['play','stop']){const original=HablaAudio[method];HablaAudio[method]=function(...args){if(method==='play')window.__playedAudio=null;__audioTrace.push({method,args,stack:new Error().stack});return original(...args);};}window.Audio=function(...args){const audio=new NativeAudio(...args);audio.addEventListener('playing',()=>window.__playedAudio=audio.currentSrc);audio.addEventListener('error',()=>__mediaErrors.push({code:audio.error?.code,message:audio.error?.message}));window.__lastAudio=audio;return audio;};});
   const inventory=await page.evaluate(clips=>({structures:STRUCTURES.length,examples:allCards().length,verbs:VERB_BANK.verbs.length,combinations:CONJ_COUNTS.sentences,exercises:BOOK_EX.length,units:BOOK_UNITS.length,scenes:SCENARIO_SETS.length,turns:SCENARIO_SETS.reduce((n,s)=>n+s.turns.length,0),workbookAudio:BOOK_EX.flatMap(e=>e.items).filter(i=>i.audio).length,workbookRecorded:BOOK_EX.flatMap(e=>e.items).filter(i=>i.audio&&clips[i.audio]).length,sceneRecorded:SCENARIO_SETS.flatMap(s=>s.turns).filter(t=>clips[t.q]).length}),catalog.clips);
   for(const name of ['home','lab','diagnostic','dialogues','library','practice','reviews','board','doubts','scenarios','verbs','workbook','progress']){
    await nav(page,name);
@@ -68,6 +77,22 @@ async function testCase(base,config){
    }
   }
   checks.push('13 telas navegadas pela interface');
+  await page.evaluate(()=>document.fonts.ready);
+  assert.ok(await page.evaluate(()=>document.fonts.check('500 15px Inter')));
+  assert.equal(await page.locator('#sidebarNav details').count(),3);
+  for(const theme of ['dark','light']){
+   await page.evaluate(theme=>{data.theme=theme;save();render();},theme);
+   const palette=await page.evaluate(()=>{const s=getComputedStyle(document.body);return {text:s.color,bg:s.backgroundColor,font:s.fontFamily,accent:s.getPropertyValue('--accent').trim()};});
+   assert.ok(palette.font.startsWith('Inter'));assert.ok(['#bd2133','#c62c3e'].includes(palette.accent));
+   await page.screenshot({path:path.join(results,config.name+'-'+theme+'.png'),fullPage:false,animations:'disabled'});
+  }
+  assert.equal(await page.locator('.sidebar').evaluate(node=>getComputedStyle(node).scrollbarWidth),'none');
+  checks.push('menu em três grupos; fonte Inter local carregada; temas claro/escuro preto, branco e vermelho; rolagem lateral sem barra');
+  await page.locator('#accountButton').click();
+  assert.ok((await page.locator('#accountsRoot').innerText()).includes('disponíveis em breve'));
+  assert.equal(await page.evaluate(()=>typeof window.HablaFirebase),'undefined');
+  await page.locator('[data-account="close"]').click();
+  checks.push('sem configuração Firebase mantém estudo local e não carrega SDK de autenticação');
   await page.locator('#voiceSpeed').selectOption('0.7');
   await page.locator('[data-act="speak"]').click();
   await waitForAudio(page,unsupported);
@@ -82,6 +107,22 @@ async function testCase(base,config){
   for(const unit of [2,5,7])await page.locator(`[data-lab-unit="${unit}"]`).check();
   await page.locator('#labMode').selectOption('dialogue');await page.locator('[data-act="lab-start"]').click();
   await page.locator('#labAnswer').fill('Resposta provisória que deve permanecer.');
+  if(await page.locator('#sidebarNav').isVisible()){
+   const group=page.locator('#sidebarNav details[data-nav-group="class"]');
+   if(!await group.evaluate(node=>node.open))await group.locator('summary').click();
+   await group.locator('[data-resources-open]').click();
+  }else{
+   await page.locator('[data-act="more-open"]').click();
+   await page.locator('#moreRoot [data-resources-open]').click();
+  }
+  assert.equal(await page.locator('#moreRoot [role="dialog"]').count(),0);
+  await page.locator('#resourceTerm').fill('buenos días');
+  assert.ok((await page.locator('[data-resource="wordreference"]').getAttribute('href')).includes('buenos%20d%C3%ADas'));
+  assert.equal(await page.locator('#resourcesRoot .account-dialog').evaluate(node=>getComputedStyle(node).scrollbarWidth),'none');
+  await page.screenshot({path:path.join(results,config.name+'-resources.png'),fullPage:false});
+  await page.locator('[data-resources-close]').click();
+  assert.equal(await page.locator('#labAnswer').inputValue(),'Resposta provisória que deve permanecer.');
+  checks.push('Consultar espanhol abre pelo menu e preserva a resposta do exercício');
   await page.locator('#doubtFab').click();await page.locator('#dq-question').fill('Como usar esta expressão?');
   await page.locator('#dq-form button[type="submit"]').click();
   assert.equal(await page.locator('#labAnswer').inputValue(),'Resposta provisória que deve permanecer.');
@@ -134,7 +175,7 @@ async function testCase(base,config){
    offlineRange={passed:false,limitation:error.message};
   }
   assert.equal(await page.evaluate(()=>data.doubts.length),2);
-  checks.push(unsupported?'Range 206 online correto; limitações de recarga e mídia offline registradas':'PWA recarrega offline; MP3 toca offline; Range 206 de dois bytes; dados preservados');
+  checks.push(!offlineReload.passed||offlineRange?.passed===false?'Range 206 online e dados preservados; recarga e requisição offline limitadas pelo WebKit Windows':unsupported?'Range 206 online correto; limitações de mídia offline registradas':'PWA recarrega offline; MP3 toca offline; Range 206 de dois bytes; dados preservados');
   await page.evaluate(()=>HablaAudio.stop());await page.screenshot({path:path.join(results,config.name+'.png'),fullPage:true});
   assert.deepEqual(errors,[]);
   assert.deepEqual(overflows,[],'As telas não devem ultrapassar a largura do aparelho');
@@ -143,7 +184,7 @@ async function testCase(base,config){
   const failure=await page.evaluate(()=>({url:location.href,status:document.getElementById('audioStatus')?.textContent,toast:document.getElementById('toast')?.textContent,mediaErrors:window.__mediaErrors,audio:window.__lastAudio?{src:__lastAudio.src,paused:__lastAudio.paused,readyState:__lastAudio.readyState,error:__lastAudio.error?{code:__lastAudio.error.code,message:__lastAudio.error.message}:null,support:__lastAudio.canPlayType('audio/mpeg')}:null}));
   await page.screenshot({path:path.join(results,config.name+'-failure.png'),fullPage:true});
   const nativeProbe=await page.evaluate(async path=>{const a=document.createElement('audio'),steps=[];try{a.src='./audio/'+path;steps.push('src');a.playbackRate=.7;steps.push('rate');a.preservesPitch=true;steps.push('pitch');await a.play();a.pause();return {steps,played:true};}catch(e){return {steps,error:e.name,message:e.message};}},Object.values(catalog.clips)[0]);
-  console.error(JSON.stringify({name:config.name,failure,nativeProbe,checks,errors}));throw error;
+  console.error(JSON.stringify({name:config.name,failure,nativeProbe,checks,errors,trace:await page.evaluate(()=>window.__audioTrace?.slice(-8))}));throw error;
  }finally{await context.close();await browser.close();}
 }
 (async()=>{

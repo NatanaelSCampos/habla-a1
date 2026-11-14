@@ -8,13 +8,26 @@
     "audio:sources": "node tools/collect-audio-sources.cjs",
     "audio:generate": "node tools/generate-azure-audio.cjs",
     "audio:verify": "node tools/verify-audio.cjs",
-    "format": "prettier --write index.html \"assets/**/*.{css,js}\"",
-    "format:check": "prettier --check index.html \"assets/**/*.{css,js}\""
+    "format": "prettier --write index.html \"assets/**/*.{css,js}\" sync-data.js profile-store.js app-sync.js accounts.js accounts.css resources.js resources.css firebase-config.js",
+    "format:check": "prettier --check index.html \"assets/**/*.{css,js}\" sync-data.js profile-store.js app-sync.js accounts.js accounts.css resources.js resources.css firebase-config.js",
+    "build:firebase": "node tools/build-firebase.cjs",
+    "check:firebase": "node tools/build-firebase.cjs --check",
+    "configure:firebase": "node tools/configure-firebase.cjs",
+    "test:sync": "firebase emulators:exec --project demo-habla --only auth,firestore \"node tests/sync-browser.cjs\""
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "6.0.0",
+    "esbuild": "0.28.2",
     "ffmpeg-static": "5.3.0",
+    "firebase-tools": "15.36.0",
     "microsoft-cognitiveservices-speech-sdk": "1.53.0",
     "playwright": "1.62.0",
     "prettier": "3.10.1"
+  },
+  "dependencies": {
+    "firebase": "13.3.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.13.6"
   }
 }

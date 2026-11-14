@@ -45,6 +45,7 @@ function begin(){
  requestAnimationFrame(()=>document.getElementById("dq-question")?.focus({preventScroll:true}));
 }
 function finish(){if(!open)return;open=false;show();origin=null;if(returnFocus&&document.contains(returnFocus))returnFocus.focus({preventScroll:true});returnFocus=null;}
+window.HablaDoubts.closeQuick=finish;
 function autosave(){
  if(!open)return;let form=document.getElementById("dq-form");if(!form)return;
  let f=new FormData(form);

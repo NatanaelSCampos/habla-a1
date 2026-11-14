@@ -22,6 +22,7 @@ jobs:
           python-version: '3.11'
       - run: npm ci
       - run: npm run check:site
+      - run: npm run check:firebase
       - run: node tools/collect-audio-sources.cjs --check
       - run: npm run format:check
       - run: npm test
@@ -46,5 +47,30 @@ jobs:
         if: always()
         with:
           name: verificacao-do-navegador
+          path: test-results/
+          retention-days: 7
+
+  sync:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:sync
+        env:
+          DEBUG: ''
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verificacao-da-sincronizacao
           path: test-results/
           retention-days: 7

@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(uid) { return request.auth != null && request.auth.uid == uid; }
+    match /users/{uid}/records/{recordId} {
+      allow read: if owner(uid);
+      allow create, update: if owner(uid)
+        && request.resource.data.keys().hasOnly(['kind','key','payload','deleted','updatedAt'])
+        && request.resource.data.keys().hasAll(['kind','key','payload','deleted','updatedAt'])
+        && request.resource.data.kind in ['progress','favorites','verbProgress','activity','verbActivity','workbookActivity','scenarioActivity','custom','doubts','preferences','book.answers','book.results','book.review','book.notes','book.last','lab.results','lab.sessions','lab.preferences','coach.results','coach.conversations','coach.preferences','resume']
+        && request.resource.data.key is string && request.resource.data.key.size() > 0 && request.resource.data.key.size() <= 1000
+        && request.resource.data.payload is string && request.resource.data.payload.size() <= 200000
+        && request.resource.data.deleted is bool
+        && request.resource.data.updatedAt == request.time;
+      // Exclusões são registros marcados, para chegar aos aparelhos offline.
+      allow delete: if false;
+    }
+    match /users/{uid}/meta/profile {
+      allow read: if owner(uid);
+      allow create, update: if owner(uid)
+        && request.resource.data.keys().hasOnly(['schema','status','updatedAt'])
+        && request.resource.data.keys().hasAll(['schema','status','updatedAt'])
+        && request.resource.data.schema == 1
+        && request.resource.data.status in ['importing','ready']
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

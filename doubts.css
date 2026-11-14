@@ -16,7 +16,7 @@
 .doubt-mode input{height:18px;width:18px;accent-color:var(--accent)}
 .doubt-entry{display:grid;gap:10px;margin-top:15px}
 .doubt-entry>label,.doubt-entry .doubt-two label{display:grid;gap:6px;color:var(--text);font-size:12px;font-weight:740}
-.doubt-entry label b{color:#b74e45}.doubt-entry textarea{line-height:1.5;resize:vertical;min-height:76px}
+.doubt-entry label b{color:var(--red)}.doubt-entry textarea{line-height:1.5;resize:vertical;min-height:76px}
 .doubt-entry #doubtAnswer{min-height:130px}
 .doubt-two{display:grid;grid-template-columns:1.2fr .8fr;gap:10px}
 .doubt-form-actions{display:flex;gap:9px;margin-top:10px;flex-wrap:wrap}
@@ -24,8 +24,8 @@
 .doubt-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;align-items:start}
 .doubt-card{padding:19px;min-width:0;overflow-wrap:anywhere}
 .doubt-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.doubt-pill{display:inline-flex;align-items:center;font-size:11px;font-weight:800;background:#fff3dc;color:#87601c;padding:5px 9px;border-radius:99px}
-.doubt-pill.done{background:#e6f6ee;color:#206e52}
+.doubt-pill{display:inline-flex;align-items:center;font-size:11px;font-weight:800;background:var(--surface2);color:var(--text);padding:5px 9px;border-radius:99px}
+.doubt-pill.done{background:var(--surface2);color:var(--text)}
 .doubt-meta{font-size:10px;color:var(--muted)}
 .doubt-card h3{font-size:17px;line-height:1.43;margin:16px 0 8px;letter-spacing:-.25px}
 .doubt-context{font-size:12px;color:var(--muted);margin:0 0 12px;white-space:pre-wrap}

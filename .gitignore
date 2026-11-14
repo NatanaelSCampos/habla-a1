@@ -8,3 +8,5 @@ __pycache__/
 audio/*.tmp
 audio/clips/*.tmp.mp3
 audio/azure-index.pending.json*
+*-debug.log
+.firebase/

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#f7f9f9" />
+    <meta name="theme-color" content="#fafafa" />
     <meta
       name="description"
       content="Habla — painel de apoio e prática de conversação em espanhol com repetição espaçada, estruturas e treino de fala."
@@ -17,12 +17,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="application-name" content="Habla A1" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" type="image/png" href="./icon-192.png" />
-    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <link rel="icon" type="image/png" href="./assets/brand-192.png" />
+    <link rel="apple-touch-icon" href="./assets/brand-192.png" />
     <link rel="stylesheet" href="./study-lab.css" />
     <link rel="stylesheet" href="./doubts.css" />
     <link rel="stylesheet" href="./coach.css" />
     <link rel="stylesheet" href="./quick-doubt.css" />
+    <link rel="stylesheet" href="./accounts.css" />
+    <link rel="stylesheet" href="./resources.css" />
   </head>
   <body>
     <a class="skip-link" href="#app">Ir para o conteúdo</a>
@@ -55,7 +57,10 @@
               aria-label="Ver apresentação inicial novamente"
             >
               ? <span>Como usar</span></button
-            ><span class="pill"><span class="pill-dot"></span> Seu progresso está salvo</span
+            ><span class="pill"
+              ><span class="pill-dot"></span
+              ><span id="syncIndicator">Salvo neste aparelho</span></span
+            ><button id="accountButton" class="btn secondary sm" data-account="open">Entrar</button
             ><button
               class="icon-btn"
               data-act="theme"
@@ -87,15 +92,23 @@
       ><span class="dq-count" id="doubtFabCount" hidden></span>
     </button>
     <div id="doubtQuickRoot"></div>
+    <div id="accountsRoot"></div>
+    <div id="resourcesRoot"></div>
     <input type="file" accept="application/json,.json" id="importFile" hidden />
     <script src="./assets/js/content.js" defer></script>
     <script src="./assets/js/verbs.js" defer></script>
     <script src="./assets/js/workbook.js" defer></script>
     <script src="./audio-player.js" defer></script>
+    <script src="./sync-data.js" defer></script>
+    <script src="./profile-store.js" defer></script>
+    <script src="./firebase-config.js" defer></script>
     <script src="./assets/js/app.js" defer></script>
     <script src="./study-lab.js" defer></script>
     <script src="./doubts.js" defer></script>
     <script src="./coach.js" defer></script>
     <script src="./quick-doubt.js" defer></script>
+    <script src="./app-sync.js" defer></script>
+    <script src="./accounts.js" defer></script>
+    <script src="./resources.js" defer></script>
   </body>
 </html>

@@ -4,7 +4,7 @@
 var KEY="habla.lab.v1";
 var DEFAULT={units:[1,2,3],mode:"mixed",count:15,translations:false,results:{},sessions:[],notifications:{enabled:false,hours:[5,13,20],sent:{}}};
 var state;
-try{state=Object.assign({},DEFAULT,JSON.parse(localStorage.getItem(KEY)||"{}"));state.notifications=Object.assign({},DEFAULT.notifications,state.notifications||{});}catch(_){state=JSON.parse(JSON.stringify(DEFAULT));}
+try{state=Object.assign({},DEFAULT,JSON.parse(window.HablaStore.getItem(KEY)||"{}"));state.notifications=Object.assign({},DEFAULT.notifications,state.notifications||{});}catch(_){state=JSON.parse(JSON.stringify(DEFAULT));}
 var session=null;
 var unitNames=["Nos presentamos","Mi casa, mi barrio","Vamos de viaje","En familia","Igual que todos los días","No me gusta, ¡me encanta!","Buenas intenciones","Cuídate mucho","Experiencias vividas","Fin de trayecto"];
 var modes=[
@@ -96,7 +96,7 @@ var dialogueData=[
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function day(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function datePlus(days){var d=new Date();d.setDate(d.getDate()+days);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(_){if(typeof toast==="function")toast("Não foi possível salvar as revisões.");}}
+function persist(){try{window.HablaStore.setItem(KEY,JSON.stringify(state));}catch(_){if(typeof toast==="function")toast("Não foi possível salvar as revisões.");}}
 function normalize(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("es").replace(/[¿?¡!.,;:]/g,"").replace(/\s+/g," ").trim();}
 function shuffled(list){var copy=list.slice();for(var i=copy.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var a=copy[i];copy[i]=copy[j];copy[j]=a;}return copy;}
 function selectedUnits(){return state.units.length?state.units.slice().sort(function(a,b){return a-b;}):[1];}
@@ -266,7 +266,7 @@ document.addEventListener("visibilitychange",function(){if(!document.hidden)remi
 window.addEventListener("focus",reminderTick);
 setInterval(reminderTick,60000);
 setTimeout(reminderTick,1200);
-window.HablaLab={render:render,handleAction:handleAction,settings:state,reload:function(){try{var re=JSON.parse(localStorage.getItem(KEY)||"{}");state=Object.assign({},DEFAULT,re);state.notifications=Object.assign({},DEFAULT.notifications,state.notifications||{});window.HablaLab.settings=state;session=null;}catch(_){}}};
+window.HablaLab={render:render,handleAction:handleAction,settings:state,checkpoint:()=>session,restore:value=>{session=value||null;},reload:function(preserveSession){try{var re=JSON.parse(window.HablaStore.getItem(KEY)||"{}");state=Object.assign({},DEFAULT,re);state.notifications=Object.assign({},DEFAULT.notifications,state.notifications||{});window.HablaLab.settings=state;if(!preserveSession)session=null;}catch(_){}}};
 if(typeof GUIDE_PAGES!=="undefined")GUIDE_PAGES.lab=[
  ["Selecione as unidades","Escolha uma, várias ou todas as unidades; suas preferências ficam salvas.",".lab-units"],
  ["Alterne os tipos de treino","Diagnóstico, conjugação, transformação, ditado, conversação e exercícios do caderno.",".lab-controls"],

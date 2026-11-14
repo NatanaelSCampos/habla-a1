@@ -1,0 +1,3 @@
+export {initializeApp, deleteApp} from 'firebase/app';
+export {getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification, signOut, connectAuthEmulator, setPersistence, browserLocalPersistence, browserSessionPersistence} from 'firebase/auth';
+export {initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, collection, doc, getDocFromServer, getDocsFromServer, setDoc, onSnapshot, writeBatch, serverTimestamp, connectFirestoreEmulator, waitForPendingWrites, terminate, clearIndexedDbPersistence} from 'firebase/firestore';

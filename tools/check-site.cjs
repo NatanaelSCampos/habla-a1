@@ -32,6 +32,11 @@ for (const [, attributes, body] of scripts) {
 }
 assert.ok(!/<style\b/.test(html), 'Estilos devem ficar nos arquivos CSS');
 const order = scripts.map(([, attrs]) => attrs.match(/src="([^"]+)"/)[1]);
+for(const dependency of ['./sync-data.js','./profile-store.js','./firebase-config.js']) {
+  assert.ok(order.indexOf(dependency)>=0 && order.indexOf(dependency)<order.indexOf('./assets/js/app.js'), 'Persistência deve carregar antes da aplicação: '+dependency);
+}
+assert.ok(order.indexOf('./app-sync.js')>order.indexOf('./coach.js')&&order.indexOf('./accounts.js')>order.indexOf('./app-sync.js'),'Contas devem carregar depois dos módulos');
+assert.ok(cached.has('./assets/vendor/firebase-sdk.js'),'O SDK local deve estar disponível offline');
 for (const dependency of ['./assets/js/content.js', './assets/js/verbs.js', './assets/js/workbook.js', './audio-player.js']) {
   assert.ok(order.includes(dependency) && order.indexOf(dependency) < order.indexOf('./assets/js/app.js'), `Ordem de carregamento inválida: ${dependency}`);
 }
