@@ -1,0 +1,16 @@
+/* Botão global e diálogo rápido para dúvidas · touch first */
+.dq-fab{position:fixed;z-index:850;bottom:26px;right:24px;display:inline-flex;align-items:center;gap:9px;min-height:48px;padding:12px 17px;border:0;border-radius:999px;background:var(--accent);color:white;font-size:13px;font-weight:800;box-shadow:0 10px 30px #16483155;cursor:pointer}
+.dq-fab:hover,.dq-fab:focus-visible{outline:2px solid var(--accentStrong);outline-offset:3px;filter:brightness(.96)}
+.dq-fab svg{flex:0 0 auto}.dq-fab .dq-count{display:inline-grid;place-items:center;min-width:21px;height:21px;padding:0 4px;background:#ffffff35;border-radius:11px;font-size:10px}
+.dq-open{overflow:hidden}.dq-backdrop{position:fixed;inset:0;background:#071d1bbc;z-index:1100;animation:dqFade .15s ease}
+.dq-modal{position:fixed;z-index:1101;top:50%;left:50%;transform:translate(-50%,-50%);width:min(96vw,620px);max-height:min(90vh,900px);overflow-y:auto;padding:24px;background:var(--surface);color:var(--text);box-shadow:0 22px 85px #0004;border:1px solid var(--line);border-radius:20px;overscroll-behavior:contain}
+.dq-head{display:flex;align-items:start;justify-content:space-between;gap:12px}.dq-head h2{font-size:23px;letter-spacing:-.6px;margin:6px 0 0}.dq-head .eyebrow{font-size:10px}.dq-close{display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--text);font-size:25px;line-height:1;width:37px;height:37px}
+.dq-form{display:grid;gap:12px;margin-top:14px}.dq-form label{display:grid;gap:5px;color:var(--text);font-size:12px;font-weight:750}.dq-form label strong{color:#bf5757}
+.dq-form textarea,.dq-form input,.dq-form select{display:block;width:100%;padding:13px;background:var(--surface2);border:1px solid var(--line);border-radius:11px;color:var(--text);font-size:16px;line-height:1.5;outline-offset:2px}
+.dq-form textarea{min-height:71px;resize:vertical}.dq-form textarea#dq-question{min-height:98px}
+.dq-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}.dq-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:8px}.dq-actions button{min-height:48px;flex:1}.dq-actions .btn.primary{flex:2}
+.dq-form .muted{font-size:10px;margin:0;line-height:1.4}.dq-go{display:block;border:0;background:none;color:var(--accentStrong);margin:14px auto 0;text-align:center;padding:9px;font-size:12px;font-weight:750;text-decoration:underline}
+@keyframes dqFade{from{opacity:0}to{opacity:1}}
+@media(max-width:800px){.dq-fab{right:15px;bottom:calc(78px + env(safe-area-inset-bottom));min-height:47px;padding:10px 13px;z-index:850}.dq-fab-label{font-size:12px}.dq-modal{width:100%;max-height:min(93dvh,1000px);top:auto;bottom:0;left:0;transform:none;border-radius:20px 20px 0 0;padding:17px 17px calc(22px + env(safe-area-inset-bottom));animation:dqSlide .18s ease}.dq-head h2{font-size:21px}.dq-fields{grid-template-columns:1fr}.dq-form textarea#dq-question{min-height:91px}.dq-actions{position:sticky;bottom:0;background:var(--surface);padding-top:8px;padding-bottom:2px;z-index:1}@keyframes dqSlide{from{transform:translateY(100%)}to{transform:translateY(0)}}}
+@media(max-width:350px){.dq-fab-label{display:none}.dq-fab{width:49px;justify-content:center;padding:10px}.dq-count{display:none!important}}
+@media(prefers-reduced-motion:reduce){.dq-backdrop,.dq-modal{animation:none}}
