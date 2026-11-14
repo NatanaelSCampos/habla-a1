@@ -94,7 +94,7 @@ function grammarQuestions(){
    }
   }
  }
- // Questões de gramática do caderno adaptado — essenciais na Unidade 10, que revisa verbos anteriores.
+ // Questões de gramática da Unidade 10 e demais unidades.
  for(const ex of BOOK_EX){
   if(!getUnits().includes(ex.unit)||!/(verbo|conjuga|presente|imperativo|ser, estar|ser, estar, hay|irregulares|gustar|pronome|gerúndio)/i.test(ex.title))continue;
   if(!["fill","choice"].includes(ex.kind))continue;
