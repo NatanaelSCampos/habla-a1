@@ -14,7 +14,7 @@ var modes=[
  ["transform","Transforme a frase","Mude a pessoa gramatical sem traduzir palavra por palavra."],
  ["dictation","Ditado e escuta","Ouça uma frase em espanhol e tente escrevê-la."],
  ["dialogue","Conversação","Responda em voz alta a perguntas de situações reais."],
- ["workbook","Caderno em revisão","Questões adaptadas que já existem no caderno."],
+ ["workbook","Caderno em revisão","Exercícios das unidades do caderno."],
  ["weak","Meus pontos difíceis","Reapresente erros e respostas que exigiram ajuda."]
 ];
 var dialogueData=[
@@ -117,7 +117,7 @@ function sources(){
  });
  if(typeof BOOK_EX!=="undefined")BOOK_EX.forEach(function(ex){
   if(!units.includes(ex.unit)||!["fill","choice","tf","order"].includes(ex.kind))return;
-  ex.items.forEach(function(item,i){if(!item.answer)return;all.push({id:"w:"+ex.id+":"+i,unit:ex.unit,type:"workbook",prompt:item.prompt,answer:item.answer,es:item.prompt,pt:"Atividade adaptada do caderno · "+ex.title,full:item.answer,choices:item.options||null,exid:ex.id});});
+  ex.items.forEach(function(item,i){if(!item.answer)return;all.push({id:"w:"+ex.id+":"+i,unit:ex.unit,type:"workbook",prompt:item.prompt,answer:item.answer,es:item.prompt,pt:"Exercício do caderno · "+ex.title,full:item.answer,choices:item.options||null,exid:ex.id});});
  });
  return all;
 }
@@ -143,19 +143,19 @@ function remindersPanel(){
  return '<section class="card lab-reminders"><div class="row between wrap"><div><h2>⏰ Lembretes de frequência</h2><p class="muted small">Horários locais, individualmente por aparelho. Você pode desativar qualquer um.</p></div><span class="chip">'+(perm==="granted"?"Permissão ativa":perm==="denied"?"Bloqueado no navegador":"Opcional")+'</span></div>'+
  '<div class="lab-hours">'+[5,13,20].map(function(hour){return '<label><input data-lab-hour="'+hour+'" type="checkbox" '+(n.hours.includes(hour)?"checked":"")+'><span>'+String(hour).padStart(2,"0")+':00</span></label>';}).join("")+'</div>'+
  '<div class="row wrap">'+btn(n.enabled?"Desativar lembretes":"Ativar lembretes","lab-notify",n.enabled?"secondary":"primary")+btn("Testar notificação","lab-test","secondary")+'</div>'+
- '<p class="lab-caution">Aviso técnico: esta primeira versão usa notificações locais somente quando o aplicativo está aberto ou volta a ficar ativo. GitHub Pages não consegue enviar avisos pontualmente com o PWA fechado; isso exige um serviço de push externo. Não enviaremos notificações sem você ativar.</p></section>';
+ '<p class="lab-caution">Os avisos aparecem quando o Habla está aberto. Para não esquecer de estudar com o aplicativo fechado, também vale configurar um alarme no celular.</p></section>';
 }
 function overview(){
  var s=summary();
  return '<div class="lab-shell">'+heading("ROTINA DE ESTUDOS","Revisão inteligente","Estude qualquer combinação das 10 unidades, no dia que preferir, aproveitando os bancos de frases, verbos e questões já disponíveis.")+
  '<div class="grid four lab-kpis"><div class="card stat"><div class="stat-label">Unidades escolhidas</div><div class="value">'+s.units+'</div></div><div class="card stat"><div class="stat-label">Itens praticados</div><div class="value">'+s.trained+'</div></div><div class="card stat"><div class="stat-label">Revisões vencidas</div><div class="value">'+s.due+'</div></div><div class="card stat"><div class="stat-label">Sessões concluídas</div><div class="value">'+s.sessions+'</div></div></div>'+
- '<div class="lab-grid">'+pickPanel()+'<div class="lab-side">'+helpText()+'<div class="card lab-tiny"><h2>O que torna este treino adaptativo?</h2><p>Uma resposta esquecida volta antes; uma resposta recuperada facilmente tem uma pausa maior. Sua avaliação é considerada mesmo se a resposta estava correta.</p><p class="muted small">Todos os dados ficam no navegador de cada participante. Você pode usar o backup do Habla.</p></div></div></div>'+
+ '<div class="lab-grid">'+pickPanel()+'<div class="lab-side">'+helpText()+'<div class="card lab-tiny"><h2>O que torna este treino adaptativo?</h2><p>Uma resposta esquecida volta antes; uma resposta recuperada facilmente tem uma pausa maior. Sua avaliação é considerada mesmo se a resposta estava correta.</p><p class="muted small">Seus estudos ficam salvos neste aparelho. Use o backup para guardar seu progresso.</p></div></div></div>'+
  '<div style="margin-top:16px">'+remindersPanel()+'</div>'+
  '<div class="card lab-summary"><h2>Últimas sessões</h2>'+(state.sessions.length?state.sessions.slice(-5).reverse().map(function(x){return '<div class="lab-history"><strong>'+esc(x.label)+'</strong><span>'+x.date+' · '+x.done+'/'+x.total+' respostas avaliadas</span></div>';}).join(""):'<p class="muted">Comece o primeiro treino para construir seu histórico.</p>')+'</div></div>';
 }
 function ask(q){
  var kind=q.type,isManual=kind==="dialogue",isAudio=kind==="dictation",isWorkbook=kind==="workbook";
- var uiText=(kind==="transform"?"Transforme para a próxima pessoa (indicada abaixo).":kind==="cloze"?"Complete com a conjugação correta.":kind==="dictation"?"Ouça a frase e digite o que entendeu.":kind==="dialogue"?"Responda em espanhol — de preferência em voz alta.":"Resolva a atividade adaptada.");
+ var uiText=(kind==="transform"?"Transforme para a próxima pessoa (indicada abaixo).":kind==="cloze"?"Complete com a conjugação correta.":kind==="dictation"?"Ouça a frase e digite o que entendeu.":kind==="dialogue"?"Responda em espanhol — de preferência em voz alta.":"Resolva a atividade do caderno.");
  var options=(q.choices||[]).slice();
  var answer=session.answer||"";
  var textPrompt=isAudio?'<p class="lab-audio-prompt">🎧 Escute e escreva o que entendeu.</p>':'<div class="lab-prompt">'+esc(q.prompt)+'</div>';
@@ -165,7 +165,7 @@ function ask(q){
  '<label class="lab-answer-label" for="labAnswer">'+(isManual?"Sua resposta (ou fale e avalie de memória)":"Sua resposta")+'</label>'+
  (options.length&&kind==="workbook"?'<select id="labAnswer" class="field"><option value="">Escolha uma resposta</option>'+options.map(function(opt){return '<option value="'+esc(opt)+'" '+(opt===answer?"selected":"")+'>'+esc(opt)+'</option>';}).join("")+'</select>':'<textarea id="labAnswer" class="field" rows="'+(kind==="transform"||kind==="dialogue"?"3":"2")+'" placeholder="Tente lembrar antes de revelar..." '+(session.revealed?"readonly":"")+'>'+esc(answer)+'</textarea>')+'</div>'+
  '<div class="lab-help-row"><button class="btn secondary sm" data-act="lab-translation">'+(session.translation?"Ocultar tradução":"Ver tradução")+'</button><button class="btn secondary sm" data-act="lab-hint">Ver dica</button><button class="btn secondary sm" data-act="lab-mic">🎤 Falar resposta</button></div>'+
- (session.translation?'<div class="lab-reveal">'+esc(q.pt||"Tradução ainda não disponível para esse exercício adaptado.")+'</div>':'')+
+ (session.translation?'<div class="lab-reveal">'+esc(q.pt||"Use o contexto da atividade para compreender a pergunta.")+'</div>':'')+
  (session.hint?'<div class="lab-reveal">Dica: '+esc(kind==="cloze"?"Infinitivo: "+q.lemma+" · sujeito: "+VERB_PEOPLE[q.person]:kind==="transform"?"Troque o sujeito e a conjugação.":kind==="dictation"?"Ouça em partes.":kind==="dialogue"?"Use uma resposta curta e clara.":"Leia o contexto e escolha com atenção.")+'</div>':'')+
  '<div class="row wrap lab-submit">'+(!session.revealed?'<button class="btn primary" data-act="lab-check">'+(isManual?"Mostrar resposta-modelo":"Corrigir / revelar")+'</button><button class="btn secondary" data-act="lab-giveup">Não lembro · revelar</button>':"")+'</div>'+
  (session.revealed?feedback(q):'')+'</section>';
@@ -190,17 +190,17 @@ function finished(){
 }
 function render(){return session?reviewScreen():overview();}
 function noticeNow(){
- if(!("Notification" in window)||Notification.permission!=="granted")return Promise.reject(Error("Sem permissão para notificações."));
+ if(!("Notification" in window)||Notification.permission!=="granted")return Promise.reject(Error("Ative as notificações nas configurações do aparelho."));
  if("serviceWorker" in navigator)return navigator.serviceWorker.ready.then(function(reg){return reg.showNotification("Habla · hora de estudar", {body:"Uma prática curta hoje ajuda a manter sua sequência. Abra o Habla e revise algumas frases.",icon:"./icon-192.png",badge:"./icon-192.png",tag:"habla-study-"+day(),data:{url:"./"}});});
- return Promise.reject(Error("Service worker indisponível."));
+ return Promise.reject(Error("Não foi possível enviar este aviso agora."));
 }
 async function enableNotifications(){
  if(!("Notification" in window)){toast("Seu navegador não oferece notificações.");return;}
  if(state.notifications.enabled){state.notifications.enabled=false;persist();render();return;}
  var status=Notification.permission;
  if(status==="default")status=await Notification.requestPermission();
- if(status!=="granted"){toast("Permissão não concedida. Ajuste nas configurações do navegador.");return;}
- state.notifications.enabled=true;persist();render();toast("Lembretes locais ativados para quando o aplicativo estiver ativo.");
+ if(status!=="granted"){toast("Ative a permissão de notificações nas configurações do aparelho.");return;}
+ state.notifications.enabled=true;persist();render();toast("Lembretes ativados para quando o Habla estiver aberto.");
 }
 function reminderTick(){
  var n=state.notifications;if(!n.enabled||!("Notification" in window)||Notification.permission!=="granted")return;
